@@ -6,20 +6,20 @@
     <title>Just Artifacts</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom scrollbar for better aesthetics */
+        /* Custom scrollbar for better aesthetics in dark mode */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #f1f1f1;
+            background: #1f2937; /* gray-800 */
         }
         ::-webkit-scrollbar-thumb {
-            background: #888;
+            background: #4b5563; /* gray-600 */
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #555;
+            background: #6b7280; /* gray-500 */
         }
 
         /* Hide scrollbar for Chrome, Safari and Opera */
@@ -33,18 +33,18 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 h-screen flex flex-col overflow-hidden font-sans text-gray-800">
+<body class="bg-gray-900 h-screen flex flex-col overflow-hidden font-sans text-gray-100">
 
     <!-- Header -->
-    <header class="bg-white border-b border-gray-200 h-14 flex items-center justify-between px-4 shrink-0 z-20 relative">
+    <header class="bg-gray-800 border-b border-gray-700 h-14 flex items-center justify-between px-4 shrink-0 z-20 relative">
         <div class="flex items-center gap-2">
-            <h1 class="text-lg font-bold text-gray-900">just artifacts</h1>
+            <h1 class="text-lg font-bold text-gray-100">just artifacts</h1>
         </div>
         <div class="flex items-center gap-3">
-            <button id="text-wrap-btn" class="p-2 hover:bg-gray-100 rounded text-sm text-gray-600" title="Toggle Text Wrap">
+            <button id="text-wrap-btn" class="p-2 hover:bg-gray-700 rounded text-sm text-gray-300 transition-colors" title="Toggle Text Wrap">
                 Wrap: On
             </button>
-            <button id="fullscreen-btn" class="p-2 hover:bg-gray-100 rounded text-sm text-gray-600" title="Fullscreen Preview">
+            <button id="fullscreen-btn" class="p-2 hover:bg-gray-700 rounded text-sm text-gray-300 transition-colors" title="Fullscreen Preview">
                 Fullscreen
             </button>
         </div>
@@ -54,75 +54,76 @@
     <main class="flex-1 flex overflow-hidden relative">
 
         <!-- Sidebar (Hidden by default) -->
-        <aside id="sidebar" class="absolute top-0 left-0 bottom-0 w-64 bg-white border-r border-gray-200 transform -translate-x-full transition-transform duration-300 z-30 flex flex-col shadow-lg">
-            <div class="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-                <h2 class="font-semibold text-gray-700">Saved Artifacts</h2>
-                <button id="close-sidebar-btn" class="text-gray-500 hover:text-gray-800">
+        <aside id="sidebar" class="absolute top-0 left-0 bottom-0 w-64 bg-gray-800 border-r border-gray-700 transform -translate-x-full transition-transform duration-300 z-30 flex flex-col shadow-lg">
+            <div class="p-4 border-b border-gray-700 bg-gray-800 flex justify-between items-center">
+                <h2 class="font-semibold text-gray-200">Saved Artifacts</h2>
+                <button id="close-sidebar-btn" class="text-gray-400 hover:text-gray-100 transition-colors">
                     &times;
                 </button>
             </div>
             <div id="saved-list" class="flex-1 overflow-y-auto p-2 space-y-1">
                 <!-- Saved items will be injected here -->
-                <div class="text-sm text-gray-400 text-center py-4">No saved artifacts</div>
+                <div class="text-sm text-gray-500 text-center py-4">No saved artifacts</div>
             </div>
-            <div class="p-4 border-t border-gray-200 bg-gray-50">
-                <button id="new-artifact-sidebar-btn" class="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors">
+            <div class="p-4 border-t border-gray-700 bg-gray-800">
+                <button id="new-artifact-sidebar-btn" class="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors border border-transparent">
                     + New Artifact
                 </button>
             </div>
         </aside>
 
         <!-- Sidebar Overlay -->
-        <div id="sidebar-overlay" class="absolute inset-0 bg-black/20 z-20 hidden transition-opacity opacity-0"></div>
+        <div id="sidebar-overlay" class="absolute inset-0 bg-black/50 z-20 hidden transition-opacity opacity-0"></div>
 
         <!-- Code Panel (Left, 30%) -->
-        <div class="w-[30%] h-full flex flex-col border-r border-gray-200 bg-white relative z-10">
-            <textarea id="code-editor" class="w-full h-full p-4 font-mono text-sm resize-none focus:outline-none bg-gray-50 text-gray-800" spellcheck="false" placeholder="// Paste your code here..."></textarea>
+        <div class="w-[30%] h-full flex flex-col border-r border-gray-700 bg-gray-900 relative z-10">
+            <textarea id="code-editor" class="w-full h-full p-4 font-mono text-sm resize-none focus:outline-none bg-gray-900 text-gray-300 placeholder-gray-600" spellcheck="false" placeholder="// Paste your code here..."></textarea>
         </div>
 
         <!-- Preview Panel (Right, 70%) -->
-        <div class="w-[70%] h-full flex flex-col bg-gray-100 relative z-10">
-            <!-- Iframe Container -->
-            <div class="flex-1 flex items-center justify-center p-8 overflow-hidden bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEgMWgydjJIMUMxeiIgZmlsbD0iI0UwRTBFMCIgZmlsbC1ydWxlPSJldmVub2RkIi8+PC9zdmc+')]">
-                <div id="preview-wrapper" class="w-full h-full bg-white shadow-sm transition-all duration-300 relative border border-gray-200">
+        <div class="w-[70%] h-full flex flex-col bg-gray-900 relative z-10">
+            <!-- Iframe Container - Dark checkerboard or just dark bg -->
+            <div class="flex-1 flex items-center justify-center p-8 overflow-hidden bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEgMWgydjJIMUMxeiIgZmlsbD0iIzMzMyIgZmlsbC1ydWxlPSJldmVub2RkIi8+PC9zdmc+')] bg-gray-900">
+                <div id="preview-wrapper" class="w-full h-full bg-white shadow-lg transition-all duration-300 relative border border-gray-700">
                     <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 text-gray-400 text-sm">
-                        Preview Area
+                        Preview Area (White Background)
                     </div>
-                    <iframe id="preview-frame" class="w-full h-full border-0 relative z-10" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
+                    <!-- Iframe keeps white background by default as it mimics browser page -->
+                    <iframe id="preview-frame" class="w-full h-full border-0 relative z-10 bg-white" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
                 </div>
             </div>
 
             <!-- Device Presets Bar -->
-            <div class="h-12 bg-white border-t border-gray-200 flex items-center justify-center gap-2 px-4 shrink-0">
+            <div class="h-12 bg-gray-800 border-t border-gray-700 flex items-center justify-center gap-2 px-4 shrink-0">
                 <span class="text-xs text-gray-400 font-medium mr-2">VIEWPORT:</span>
-                <button class="device-btn px-3 py-1 text-xs font-medium rounded hover:bg-gray-100 text-gray-600 border border-transparent hover:border-gray-200 transition-colors" data-width="375px">Mobile (375px)</button>
-                <button class="device-btn px-3 py-1 text-xs font-medium rounded hover:bg-gray-100 text-gray-600 border border-transparent hover:border-gray-200 transition-colors" data-width="768px">Tablet (768px)</button>
-                <button class="device-btn px-3 py-1 text-xs font-medium rounded hover:bg-gray-100 text-gray-600 border border-transparent hover:border-gray-200 transition-colors" data-width="1024px">Desktop (1024px)</button>
-                <button class="device-btn px-3 py-1 text-xs font-medium rounded bg-gray-100 text-gray-800 border border-gray-200" data-width="100%">Full Width</button>
-                <div class="h-4 w-px bg-gray-300 mx-2"></div>
-                <input type="number" id="custom-width" placeholder="Width (px)" class="w-24 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:border-blue-500">
+                <button class="device-btn px-3 py-1 text-xs font-medium rounded hover:bg-gray-700 text-gray-400 border border-transparent hover:border-gray-600 transition-colors" data-width="375px">Mobile (375px)</button>
+                <button class="device-btn px-3 py-1 text-xs font-medium rounded hover:bg-gray-700 text-gray-400 border border-transparent hover:border-gray-600 transition-colors" data-width="768px">Tablet (768px)</button>
+                <button class="device-btn px-3 py-1 text-xs font-medium rounded hover:bg-gray-700 text-gray-400 border border-transparent hover:border-gray-600 transition-colors" data-width="1024px">Desktop (1024px)</button>
+                <button class="device-btn px-3 py-1 text-xs font-medium rounded bg-gray-700 text-gray-200 border border-gray-600" data-width="100%">Full Width</button>
+                <div class="h-4 w-px bg-gray-600 mx-2"></div>
+                <input type="number" id="custom-width" placeholder="Width (px)" class="w-24 px-2 py-1 text-xs border border-gray-600 rounded bg-gray-700 text-gray-200 focus:outline-none focus:border-blue-500 placeholder-gray-500">
             </div>
         </div>
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-gray-200 h-14 flex items-center justify-between px-4 shrink-0 z-20">
+    <footer class="bg-gray-800 border-t border-gray-700 h-14 flex items-center justify-between px-4 shrink-0 z-20">
         <div class="flex items-center gap-4">
-            <button id="sidebar-toggle-btn" class="p-2 hover:bg-gray-100 rounded text-gray-600">
+            <button id="sidebar-toggle-btn" class="p-2 hover:bg-gray-700 rounded text-gray-400 hover:text-gray-100 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
             </button>
             <div class="relative group">
-                <input type="text" id="artifact-title" value="New_Artifact" class="text-sm font-medium text-gray-800 border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none px-1 py-0.5 bg-transparent w-48 transition-colors" />
-                <span class="absolute -top-3 left-1 text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Click to rename</span>
+                <input type="text" id="artifact-title" value="New_Artifact" class="text-sm font-medium text-gray-200 border-b border-transparent hover:border-gray-500 focus:border-blue-500 focus:outline-none px-1 py-0.5 bg-transparent w-48 transition-colors" />
+                <span class="absolute -top-3 left-1 text-[10px] text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Click to rename</span>
             </div>
         </div>
 
         <div class="flex items-center gap-3">
-            <select id="language-select" class="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:border-blue-500 text-gray-700">
+            <select id="language-select" class="text-sm border border-gray-600 rounded px-2 py-1 bg-gray-700 focus:outline-none focus:border-blue-500 text-gray-200">
                 <option value="html">HTML</option>
                 <option value="react">React</option>
             </select>
-            <button id="save-btn" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors shadow-sm flex items-center gap-2">
+            <button id="save-btn" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors shadow-sm flex items-center gap-2 border border-transparent">
                 <span>Save</span>
             </button>
         </div>
@@ -130,14 +131,14 @@
 
     <!-- Fullscreen Modal -->
     <div id="fullscreen-modal" class="fixed inset-0 bg-gray-900 z-50 hidden flex flex-col">
-        <div class="h-10 bg-gray-800 flex items-center justify-between px-4 shrink-0">
+        <div class="h-10 bg-gray-800 border-b border-gray-700 flex items-center justify-between px-4 shrink-0">
             <span class="text-gray-400 text-xs">Fullscreen Preview (Press ESC to exit)</span>
-            <button id="close-fullscreen-btn" class="text-gray-400 hover:text-white p-1">
+            <button id="close-fullscreen-btn" class="text-gray-400 hover:text-white p-1 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
         </div>
-        <div class="flex-1 bg-white relative">
-            <iframe id="fullscreen-frame" class="w-full h-full border-0" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
+        <div class="flex-1 bg-gray-900 relative flex items-center justify-center p-4"> <!-- Added padding/center for better FS experience -->
+             <iframe id="fullscreen-frame" class="w-full h-full border-0 bg-white" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
         </div>
     </div>
 
@@ -174,8 +175,6 @@
                 }
             } catch (e) {
                 console.error("Failed to load state from localStorage:", e);
-                // In case of quota exceeded or corruption, we might want to alert the user,
-                // but for now we'll just start fresh or keep empty state.
             }
         }
 
@@ -405,20 +404,20 @@
             elements.deviceButtons.forEach(btn => {
                 const btnWidth = btn.dataset.width;
                 if (btnWidth === width) {
-                    btn.classList.add('bg-gray-200', 'border-gray-300');
-                    btn.classList.remove('bg-gray-100', 'border-transparent');
+                    // Active state (Dark Mode)
+                    btn.classList.add('bg-gray-600', 'border-gray-500', 'text-gray-100');
+                    btn.classList.remove('bg-gray-700', 'border-transparent', 'text-gray-400', 'hover:bg-gray-700');
                 } else {
-                    btn.classList.remove('bg-gray-200', 'border-gray-300');
-                    btn.classList.add('bg-gray-100', 'border-transparent'); // Reset to default
+                    // Inactive state (Dark Mode)
+                    btn.classList.remove('bg-gray-600', 'border-gray-500', 'text-gray-100');
+                    btn.classList.add('bg-gray-700', 'border-transparent', 'text-gray-400', 'hover:bg-gray-700');
                     if (width === '100%' && btn.dataset.width === '100%') {
-                         // Special case for Full Width button styling which is different in HTML
-                         btn.classList.add('bg-gray-200', 'border-gray-300');
+                         // Full Width match
+                         btn.classList.add('bg-gray-600', 'border-gray-500', 'text-gray-100');
+                         btn.classList.remove('bg-gray-700', 'border-transparent', 'text-gray-400', 'hover:bg-gray-700');
                     }
                 }
             });
-
-            // If not one of the presets, maybe highlight nothing or handle custom?
-            // For now, simple logic.
         }
 
         elements.deviceButtons.forEach(btn => {
@@ -433,9 +432,10 @@
             const val = e.target.value;
             if (val) {
                 setPreviewWidth(val + 'px');
-                // Deselect buttons
-                elements.deviceButtons.forEach(btn => {
-                    btn.classList.remove('bg-gray-200', 'border-gray-300');
+                // Deselect buttons logic handled in setPreviewWidth if matched, but here we likely want to clear active classes
+                 elements.deviceButtons.forEach(btn => {
+                    btn.classList.remove('bg-gray-600', 'border-gray-500', 'text-gray-100');
+                    btn.classList.add('bg-gray-700', 'border-transparent', 'text-gray-400');
                 });
             }
         });
@@ -475,21 +475,23 @@
             elements.savedList.innerHTML = '';
 
             if (state.artifacts.length === 0) {
-                elements.savedList.innerHTML = '<div class="text-sm text-gray-400 text-center py-4">No saved artifacts</div>';
+                elements.savedList.innerHTML = '<div class="text-sm text-gray-500 text-center py-4">No saved artifacts</div>';
                 return;
             }
 
             state.artifacts.forEach(artifact => {
                 const item = document.createElement('div');
-                item.className = 'flex items-center justify-between p-2 hover:bg-gray-100 rounded cursor-pointer group';
-                // Highlight active
+                item.className = 'flex items-center justify-between p-2 hover:bg-gray-700 rounded cursor-pointer group transition-colors';
+                // Highlight active (Dark Mode)
                 if (state.activeArtifactId === artifact.id) {
-                    item.classList.add('bg-blue-50', 'hover:bg-blue-100');
+                    item.classList.add('bg-gray-700', 'border', 'border-gray-600');
+                } else {
+                     item.classList.add('border', 'border-transparent');
                 }
 
                 item.innerHTML = `
-                    <span class="text-sm font-medium text-gray-700 truncate flex-1">${artifact.title}</span>
-                    <button class="delete-btn p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete">
+                    <span class="text-sm font-medium text-gray-300 truncate flex-1 group-hover:text-gray-100">${artifact.title}</span>
+                    <button class="delete-btn p-1 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all" title="Delete">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                 `;
@@ -561,10 +563,6 @@
                 // Prompt user to rename
                 elements.artifactTitle.focus();
                 elements.artifactTitle.select();
-                // We could show a tooltip or toast here, but focus+select is a strong hint.
-                // Or use a confirm/prompt if strictly following "prompts user to rename first".
-                // The prompt requirement says: "If title is New_Artifact, clicking Save prompts user to rename first (or auto-focuses the title field)"
-                // So focusing is enough.
                 return;
             }
 
