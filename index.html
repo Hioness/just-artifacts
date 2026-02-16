@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Just Artifacts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex flex-col overflow-hidden font-sans text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 h-14 flex items-center justify-between px-4 shrink-0 z-20 relative">
+        <div class="flex items-center gap-2">
+            <h1 class="text-lg font-bold text-gray-900">just artifacts</h1>
+        </div>
+        <div class="flex items-center gap-3">
+            <button id="text-wrap-btn" class="p-2 hover:bg-gray-100 rounded text-sm text-gray-600" title="Toggle Text Wrap">
+                Wrap: On
+            </button>
+            <button id="fullscreen-btn" class="p-2 hover:bg-gray-100 rounded text-sm text-gray-600" title="Fullscreen Preview">
+                Fullscreen
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex overflow-hidden relative">
+
+        <!-- Sidebar (Hidden by default) -->
+        <aside id="sidebar" class="absolute top-0 left-0 bottom-0 w-64 bg-white border-r border-gray-200 transform -translate-x-full transition-transform duration-300 z-30 flex flex-col shadow-lg">
+            <div class="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                <h2 class="font-semibold text-gray-700">Saved Artifacts</h2>
+                <button id="close-sidebar-btn" class="text-gray-500 hover:text-gray-800">
+                    &times;
+                </button>
+            </div>
+            <div id="saved-list" class="flex-1 overflow-y-auto p-2 space-y-1">
+                <!-- Saved items will be injected here -->
+                <div class="text-sm text-gray-400 text-center py-4">No saved artifacts</div>
+            </div>
+            <div class="p-4 border-t border-gray-200 bg-gray-50">
+                <button id="new-artifact-sidebar-btn" class="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors">
+                    + New Artifact
+                </button>
+            </div>
+        </aside>
+
+        <!-- Sidebar Overlay -->
+        <div id="sidebar-overlay" class="absolute inset-0 bg-black/20 z-20 hidden transition-opacity opacity-0"></div>
+
+        <!-- Code Panel (Left, 30%) -->
+        <div class="w-[30%] h-full flex flex-col border-r border-gray-200 bg-white relative z-10">
+            <textarea id="code-editor" class="w-full h-full p-4 font-mono text-sm resize-none focus:outline-none bg-gray-50 text-gray-800" spellcheck="false" placeholder="// Paste your code here..."></textarea>
+        </div>
+
+        <!-- Preview Panel (Right, 70%) -->
+        <div class="w-[70%] h-full flex flex-col bg-gray-100 relative z-10">
+            <!-- Iframe Container -->
+            <div class="flex-1 flex items-center justify-center p-8 overflow-hidden bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEgMWgydjJIMUMxeiIgZmlsbD0iI0UwRTBFMCIgZmlsbC1ydWxlPSJldmVub2RkIi8+PC9zdmc+')]">
+                <div id="preview-wrapper" class="w-full h-full bg-white shadow-sm transition-all duration-300 relative border border-gray-200">
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 text-gray-400 text-sm">
+                        Preview Area
+                    </div>
+                    <iframe id="preview-frame" class="w-full h-full border-0 relative z-10" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
+                </div>
+            </div>
+
+            <!-- Device Presets Bar -->
+            <div class="h-12 bg-white border-t border-gray-200 flex items-center justify-center gap-2 px-4 shrink-0">
+                <span class="text-xs text-gray-400 font-medium mr-2">VIEWPORT:</span>
+                <button class="device-btn px-3 py-1 text-xs font-medium rounded hover:bg-gray-100 text-gray-600 border border-transparent hover:border-gray-200 transition-colors" data-width="375px">Mobile (375px)</button>
+                <button class="device-btn px-3 py-1 text-xs font-medium rounded hover:bg-gray-100 text-gray-600 border border-transparent hover:border-gray-200 transition-colors" data-width="768px">Tablet (768px)</button>
+                <button class="device-btn px-3 py-1 text-xs font-medium rounded hover:bg-gray-100 text-gray-600 border border-transparent hover:border-gray-200 transition-colors" data-width="1024px">Desktop (1024px)</button>
+                <button class="device-btn px-3 py-1 text-xs font-medium rounded bg-gray-100 text-gray-800 border border-gray-200" data-width="100%">Full Width</button>
+                <div class="h-4 w-px bg-gray-300 mx-2"></div>
+                <input type="number" id="custom-width" placeholder="Width (px)" class="w-24 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:border-blue-500">
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 h-14 flex items-center justify-between px-4 shrink-0 z-20">
+        <div class="flex items-center gap-4">
+            <button id="sidebar-toggle-btn" class="p-2 hover:bg-gray-100 rounded text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+            <div class="relative group">
+                <input type="text" id="artifact-title" value="New_Artifact" class="text-sm font-medium text-gray-800 border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:outline-none px-1 py-0.5 bg-transparent w-48 transition-colors" />
+                <span class="absolute -top-3 left-1 text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Click to rename</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <select id="language-select" class="text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:border-blue-500 text-gray-700">
+                <option value="html">HTML</option>
+                <option value="react">React</option>
+            </select>
+            <button id="save-btn" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors shadow-sm flex items-center gap-2">
+                <span>Save</span>
+            </button>
+        </div>
+    </footer>
+
+    <!-- Fullscreen Modal -->
+    <div id="fullscreen-modal" class="fixed inset-0 bg-gray-900 z-50 hidden flex flex-col">
+        <div class="h-10 bg-gray-800 flex items-center justify-between px-4 shrink-0">
+            <span class="text-gray-400 text-xs">Fullscreen Preview (Press ESC to exit)</span>
+            <button id="close-fullscreen-btn" class="text-gray-400 hover:text-white p-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="flex-1 bg-white relative">
+            <iframe id="fullscreen-frame" class="w-full h-full border-0" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Constants & Configuration
+         */
+        const STORAGE_KEY = 'just-artifacts-data';
+        const DEFAULT_TITLE = 'New_Artifact';
+
+        /**
+         * State Management
+         */
+        const state = {
+            artifacts: [],
+            activeArtifactId: null,
+
+            // Computed property for easy access
+            get activeArtifact() {
+                return this.artifacts.find(a => a.id === this.activeArtifactId) || null;
+            }
+        };
+
+        /**
+         * LocalStorage Helpers
+         */
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    state.artifacts = parsed.artifacts || [];
+                    state.activeArtifactId = parsed.activeArtifactId || null;
+                }
+            } catch (e) {
+                console.error("Failed to load state from localStorage:", e);
+                // In case of quota exceeded or corruption, we might want to alert the user,
+                // but for now we'll just start fresh or keep empty state.
+            }
+        }
+
+        function saveState() {
+            try {
+                const data = {
+                    artifacts: state.artifacts,
+                    activeArtifactId: state.activeArtifactId
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    alert("Storage full! Please delete some artifacts to save new ones.");
+                } else {
+                    console.error("Failed to save state:", e);
+                }
+            }
+        }
+
+        /**
+         * Artifact Operations
+         */
+        function createArtifactId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function createNewArtifact() {
+            return {
+                id: createArtifactId(),
+                title: DEFAULT_TITLE,
+                code: '',
+                language: 'html',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+        }
+
+        function saveCurrentArtifact(code, language, title) {
+            let artifact = state.activeArtifact;
+            const now = new Date().toISOString();
+
+            if (!artifact) {
+                // If no active artifact, create one
+                artifact = createNewArtifact();
+                state.artifacts.push(artifact);
+                state.activeArtifactId = artifact.id;
+            }
+
+            artifact.code = code;
+            artifact.language = language;
+            artifact.title = title;
+            artifact.updatedAt = now;
+
+            saveState();
+            return artifact;
+        }
+
+        function deleteArtifact(id) {
+            state.artifacts = state.artifacts.filter(a => a.id !== id);
+            if (state.activeArtifactId === id) {
+                state.activeArtifactId = null;
+            }
+            saveState();
+        }
+
+        function setActiveArtifact(id) {
+            state.activeArtifactId = id;
+            saveState(); // Persist the active selection
+        }
+
+        /**
+         * DOM Elements
+         */
+        const elements = {
+            codeEditor: document.getElementById('code-editor'),
+            previewFrame: document.getElementById('preview-frame'),
+            languageSelect: document.getElementById('language-select'),
+            textWrapBtn: document.getElementById('text-wrap-btn'),
+            artifactTitle: document.getElementById('artifact-title'),
+            saveBtn: document.getElementById('save-btn'),
+            sidebar: document.getElementById('sidebar'),
+            sidebarOverlay: document.getElementById('sidebar-overlay'),
+            sidebarToggleBtn: document.getElementById('sidebar-toggle-btn'),
+            closeSidebarBtn: document.getElementById('close-sidebar-btn'),
+            savedList: document.getElementById('saved-list'),
+            newArtifactSidebarBtn: document.getElementById('new-artifact-sidebar-btn'),
+            previewWrapper: document.getElementById('preview-wrapper'),
+            deviceButtons: document.querySelectorAll('.device-btn'),
+            customWidthInput: document.getElementById('custom-width'),
+            fullscreenBtn: document.getElementById('fullscreen-btn'),
+            fullscreenModal: document.getElementById('fullscreen-modal'),
+            fullscreenFrame: document.getElementById('fullscreen-frame'),
+            closeFullscreenBtn: document.getElementById('close-fullscreen-btn'),
+        };
+
+        /**
+         * Rendering Logic
+         */
+        function getHTMLContent(code) {
+            return code;
+        }
+
+        function getReactContent(code) {
+            return `<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"><\/script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"><\/script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    ${code}
+
+    // Auto-render logic
+    try {
+        const rootElement = document.getElementById('root');
+        if (typeof App !== 'undefined') {
+            const root = ReactDOM.createRoot(rootElement);
+            root.render(<App />);
+        } else {
+            // If user didn't define App, maybe they just wrote JSX or something else?
+            // We'll leave it to them, or we could try to render whatever they return.
+            // For now, assume App component.
+        }
+    } catch (e) {
+        console.error("React render error:", e);
+        document.body.innerHTML += '<pre style="color:red; padding:1rem;">' + e.message + '</pre>';
+    }
+  <\/script>
+</body>
+</html>`;
+        }
+
+        function updatePreview() {
+            const code = elements.codeEditor.value;
+            const language = elements.languageSelect.value;
+            let content = '';
+
+            if (language === 'react') {
+                content = getReactContent(code);
+            } else {
+                content = getHTMLContent(code);
+            }
+
+            const blob = new Blob([content], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+
+            elements.previewFrame.src = url;
+
+            // Also update fullscreen frame if open
+            if (!elements.fullscreenModal.classList.contains('hidden')) {
+                elements.fullscreenFrame.src = url;
+            }
+        }
+
+        // Debounce update to avoid flashing on every keystroke
+        let debounceTimer;
+        function debouncedUpdatePreview() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(updatePreview, 500); // 500ms delay
+        }
+
+        /**
+         * UI Logic
+         */
+        function initUI() {
+            // Load active artifact or reset
+            if (state.activeArtifactId && state.activeArtifact) {
+                loadArtifactToUI(state.activeArtifact);
+            } else {
+                resetUI();
+            }
+            updatePreview();
+        }
+
+        function loadArtifactToUI(artifact) {
+            elements.codeEditor.value = artifact.code || '';
+            elements.languageSelect.value = artifact.language || 'html';
+            elements.artifactTitle.value = artifact.title || DEFAULT_TITLE;
+            updatePreview();
+        }
+
+        function resetUI() {
+            elements.codeEditor.value = '';
+            elements.languageSelect.value = 'html';
+            elements.artifactTitle.value = DEFAULT_TITLE;
+            state.activeArtifactId = null; // Ensure no ID is set so next save creates new
+            updatePreview();
+        }
+
+        function toggleTextWrap() {
+            if (elements.codeEditor.style.whiteSpace === 'pre') {
+                elements.codeEditor.style.whiteSpace = 'pre-wrap';
+                elements.textWrapBtn.textContent = 'Wrap: On';
+            } else {
+                elements.codeEditor.style.whiteSpace = 'pre';
+                elements.textWrapBtn.textContent = 'Wrap: Off';
+            }
+        }
+
+        // Initial set
+        elements.codeEditor.style.whiteSpace = 'pre-wrap';
+
+        /**
+         * Event Listeners
+         */
+        elements.codeEditor.addEventListener('input', debouncedUpdatePreview);
+
+        elements.languageSelect.addEventListener('change', () => {
+            updatePreview();
+        });
+
+        elements.textWrapBtn.addEventListener('click', toggleTextWrap);
+
+        /**
+         * Device Presets & Resizing
+         */
+        function setPreviewWidth(width) {
+            elements.previewWrapper.style.width = width;
+
+            // Update UI state
+            elements.deviceButtons.forEach(btn => {
+                const btnWidth = btn.dataset.width;
+                if (btnWidth === width) {
+                    btn.classList.add('bg-gray-200', 'border-gray-300');
+                    btn.classList.remove('bg-gray-100', 'border-transparent');
+                } else {
+                    btn.classList.remove('bg-gray-200', 'border-gray-300');
+                    btn.classList.add('bg-gray-100', 'border-transparent'); // Reset to default
+                    if (width === '100%' && btn.dataset.width === '100%') {
+                         // Special case for Full Width button styling which is different in HTML
+                         btn.classList.add('bg-gray-200', 'border-gray-300');
+                    }
+                }
+            });
+
+            // If not one of the presets, maybe highlight nothing or handle custom?
+            // For now, simple logic.
+        }
+
+        elements.deviceButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const width = btn.dataset.width;
+                setPreviewWidth(width);
+                elements.customWidthInput.value = ''; // Clear custom input
+            });
+        });
+
+        elements.customWidthInput.addEventListener('input', (e) => {
+            const val = e.target.value;
+            if (val) {
+                setPreviewWidth(val + 'px');
+                // Deselect buttons
+                elements.deviceButtons.forEach(btn => {
+                    btn.classList.remove('bg-gray-200', 'border-gray-300');
+                });
+            }
+        });
+
+        /**
+         * Fullscreen Logic
+         */
+        function openFullscreen() {
+            elements.fullscreenModal.classList.remove('hidden');
+            // Ensure content is synced
+            const currentLang = elements.languageSelect.value;
+            const content = currentLang === 'react' ? getReactContent(elements.codeEditor.value) : getHTMLContent(elements.codeEditor.value);
+            const blob = new Blob([content], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            elements.fullscreenFrame.src = url;
+        }
+
+        function closeFullscreen() {
+            elements.fullscreenModal.classList.add('hidden');
+            elements.fullscreenFrame.src = ''; // clear to stop scripts
+        }
+
+        elements.fullscreenBtn.addEventListener('click', openFullscreen);
+        elements.closeFullscreenBtn.addEventListener('click', closeFullscreen);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !elements.fullscreenModal.classList.contains('hidden')) {
+                closeFullscreen();
+            }
+        });
+
+
+        /**
+         * Sidebar & Saved Artifacts Logic
+         */
+        function updateSavedListUI() {
+            elements.savedList.innerHTML = '';
+
+            if (state.artifacts.length === 0) {
+                elements.savedList.innerHTML = '<div class="text-sm text-gray-400 text-center py-4">No saved artifacts</div>';
+                return;
+            }
+
+            state.artifacts.forEach(artifact => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between p-2 hover:bg-gray-100 rounded cursor-pointer group';
+                // Highlight active
+                if (state.activeArtifactId === artifact.id) {
+                    item.classList.add('bg-blue-50', 'hover:bg-blue-100');
+                }
+
+                item.innerHTML = `
+                    <span class="text-sm font-medium text-gray-700 truncate flex-1">${artifact.title}</span>
+                    <button class="delete-btn p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" title="Delete">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                `;
+
+                // Load on click
+                item.addEventListener('click', (e) => {
+                    // Don't trigger if delete button clicked
+                    if (e.target.closest('.delete-btn')) return;
+
+                    setActiveArtifact(artifact.id);
+                    loadArtifactToUI(artifact);
+                    // Update list highlighting
+                    updateSavedListUI();
+                    // Close sidebar on mobile/small screens if desired, or just leave open
+                    if (window.innerWidth < 768) {
+                        toggleSidebar(false);
+                    }
+                });
+
+                // Delete handler
+                const deleteBtn = item.querySelector('.delete-btn');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm(`Delete "${artifact.title}"?`)) {
+                        deleteArtifact(artifact.id);
+                        if (state.activeArtifactId === null) {
+                            resetUI(); // If we deleted the active one
+                        }
+                        updateSavedListUI();
+                    }
+                });
+
+                elements.savedList.appendChild(item);
+            });
+        }
+
+        function toggleSidebar(show) {
+            if (show) {
+                elements.sidebar.classList.remove('-translate-x-full');
+                elements.sidebarOverlay.classList.remove('hidden');
+                setTimeout(() => elements.sidebarOverlay.classList.remove('opacity-0'), 10); // Fade in
+            } else {
+                elements.sidebar.classList.add('-translate-x-full');
+                elements.sidebarOverlay.classList.add('opacity-0');
+                setTimeout(() => elements.sidebarOverlay.classList.add('hidden'), 300); // Wait for fade out
+            }
+        }
+
+        elements.sidebarToggleBtn.addEventListener('click', () => toggleSidebar(true));
+        elements.closeSidebarBtn.addEventListener('click', () => toggleSidebar(false));
+        elements.sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
+
+        elements.newArtifactSidebarBtn.addEventListener('click', () => {
+            resetUI();
+            toggleSidebar(false);
+        });
+
+        /**
+         * Save Logic
+         */
+        elements.saveBtn.addEventListener('click', () => {
+            let title = elements.artifactTitle.value.trim();
+            if (!title) {
+                alert("Please enter a title.");
+                return;
+            }
+
+            if (title === DEFAULT_TITLE) {
+                // Prompt user to rename
+                elements.artifactTitle.focus();
+                elements.artifactTitle.select();
+                // We could show a tooltip or toast here, but focus+select is a strong hint.
+                // Or use a confirm/prompt if strictly following "prompts user to rename first".
+                // The prompt requirement says: "If title is New_Artifact, clicking Save prompts user to rename first (or auto-focuses the title field)"
+                // So focusing is enough.
+                return;
+            }
+
+            const code = elements.codeEditor.value;
+            const language = elements.languageSelect.value;
+
+            saveCurrentArtifact(code, language, title);
+            updateSavedListUI();
+
+            // Visual feedback
+            const originalText = elements.saveBtn.innerHTML;
+            elements.saveBtn.innerHTML = `<span>Saved!</span>`;
+            setTimeout(() => {
+                elements.saveBtn.innerHTML = originalText;
+            }, 1000);
+        });
+
+        // Handle Enter key in title input to trigger save (optional but nice)
+        elements.artifactTitle.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                elements.saveBtn.click();
+                elements.codeEditor.focus(); // Return focus to editor
+            }
+        });
+
+
+        // Initialize
+        loadState();
+        updateSavedListUI(); // Load sidebar list
+        initUI();
+        console.log("State loaded:", state);
+
+    </script>
+</body>
+</html>
