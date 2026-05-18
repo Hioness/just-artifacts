@@ -33,6 +33,35 @@
             -ms-overflow-style: none;  /* IE and Edge */
             scrollbar-width: none;  /* Firefox */
         }
+        /* Drag and drop — overlay on code panel */
+        #drop-overlay {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease;
+        }
+        #drop-overlay.active {
+            opacity: 1;
+        }
+        /* Toast notification */
+        #toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #e0e0e0;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        #toast.visible {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="bg-neutral-950 h-screen flex flex-col overflow-hidden font-sans text-neutral-100">
@@ -83,8 +112,20 @@
         <div id="sidebar-overlay" class="absolute inset-0 bg-black/50 z-20 hidden transition-opacity opacity-0"></div>
 
         <!-- Code Panel (Left, 30%) -->
-        <div class="w-[30%] h-full flex flex-col border-r border-neutral-900 bg-neutral-950 relative z-10">
-            <textarea id="code-editor" class="w-full h-full p-4 font-mono text-sm resize-none focus:outline-none bg-neutral-950 text-neutral-300 placeholder-neutral-600" spellcheck="false" placeholder="// Paste your code here..."></textarea>
+        <div id="code-panel" class="w-[30%] h-full flex flex-col border-r border-neutral-900 bg-neutral-950 relative z-10">
+            <textarea id="code-editor" class="w-full h-full p-4 font-mono text-sm resize-none focus:outline-none bg-neutral-950 text-neutral-300 placeholder-neutral-600" spellcheck="false" placeholder="// Paste code or drag & drop a file..."></textarea>
+            <!-- Drop overlay for drag-and-drop -->
+            <div id="drop-overlay" class="absolute inset-0 z-20 flex items-center justify-center bg-neutral-950/95 border-2 border-dashed border-green-500/50 m-2">
+                <div class="text-center">
+                    <svg class="mx-auto mb-2" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <p class="text-green-400 text-sm font-medium">Drop file to load</p>
+                    <p class="text-neutral-500 text-xs mt-1">.html .jsx .tsx .css .js .txt</p>
+                </div>
+            </div>
         </div>
 
         <!-- Preview Panel (Right, 70%) -->
@@ -148,6 +189,9 @@
              <iframe id="fullscreen-frame" class="w-full h-full border-0 bg-white" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
         </div>
     </div>
+
+    <!-- Toast notification for drag-and-drop feedback -->
+    <div id="toast"></div>
 
     <script>
         /**
@@ -640,6 +684,126 @@
             }
         });
 
+        /**
+         * Drag & Drop File Loading
+         * -------------------------
+         * Supports: .html .htm .jsx .tsx .css .js .ts .txt .json .md .xml .svg .csv
+         * Rejects: binary files (images, PDFs, etc.), files > 1MB
+         * Auto-detects language from extension (.jsx/.tsx → React, rest → HTML)
+         * Sets editor title to filename (without extension)
+         */
+        const ALLOWED_EXTENSIONS = new Set([
+            '.html', '.htm', '.jsx', '.tsx', '.css', '.js', '.ts',
+            '.txt', '.json', '.md', '.xml', '.svg', '.csv'
+        ]);
+        const LANG_MAP = {
+            '.jsx': 'react',
+            '.tsx': 'react',
+        };
+        const MAX_FILE_SIZE = 1024 * 1024; // 1MB
+
+        const dropOverlay = document.getElementById('drop-overlay');
+        const toast = document.getElementById('toast');
+        let dragCounter = 0;
+        let toastTimer = null;
+
+        function showToast(message, duration = 3000) {
+            toast.textContent = message;
+            toast.classList.add('visible');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.remove('visible');
+            }, duration);
+        }
+
+        function detectLanguage(filename) {
+            const ext = '.' + filename.split('.').pop().toLowerCase();
+            return LANG_MAP[ext] || 'html';
+        }
+
+        function isValidFile(file) {
+            // Reject oversized files
+            if (file.size > MAX_FILE_SIZE) {
+                const mb = (file.size / 1024 / 1024).toFixed(1);
+                showToast(`File too large (${mb}MB). Max 1MB.`);
+                return false;
+            }
+            // Validate by extension if present
+            if (file.name.includes('.')) {
+                const ext = '.' + file.name.split('.').pop().toLowerCase();
+                if (!ALLOWED_EXTENSIONS.has(ext)) {
+                    showToast(`Unsupported file type: ${ext}`);
+                    return false;
+                }
+                return true;
+            }
+            // No extension — check MIME type as fallback
+            if (file.type && !file.type.startsWith('text/')
+                && file.type !== 'application/json'
+                && file.type !== 'application/javascript') {
+                showToast('Binary files not supported. Drop a text file.');
+                return false;
+            }
+            return true;
+        }
+
+        function handleFileDrop(file) {
+            if (!isValidFile(file)) return;
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                elements.codeEditor.value = reader.result;
+                // Auto-detect language from file extension
+                elements.languageSelect.value = detectLanguage(file.name);
+                // Set artifact title to filename (minus extension)
+                const titleWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+                if (titleWithoutExt) {
+                    elements.artifactTitle.value = titleWithoutExt;
+                }
+                // Clear active artifact reference — drop replaces content
+                state.activeArtifactId = null;
+                updatePreview();
+            };
+            reader.onerror = () => {
+                showToast('Error reading file. Try again.');
+            };
+            reader.readAsText(file);
+        }
+
+        // Drag enter/leave counter prevents flicker when dragging over child elements
+        document.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            dragCounter++;
+            if (dragCounter === 1) {
+                dropOverlay.classList.add('active');
+            }
+        });
+
+        document.addEventListener('dragleave', (e) => {
+            dragCounter--;
+            if (dragCounter === 0) {
+                dropOverlay.classList.remove('active');
+            }
+        });
+
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault(); // Required to allow drop
+        });
+
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragCounter = 0;
+            dropOverlay.classList.remove('active');
+
+            // Guard: only handle file drops, not dragged text/images from the browser
+            if (!e.dataTransfer.types.includes('Files')) return;
+
+            const files = e.dataTransfer.files;
+            if (files.length === 0) return;
+
+            // Take the first file only; ignore the rest
+            handleFileDrop(files[0]);
+        });
 
         // Initialize
         loadState();
