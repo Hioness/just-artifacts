@@ -42,7 +42,12 @@
         <div class="flex items-center gap-2">
             <h1 class="text-lg font-bold text-neutral-100">just artifacts</h1>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-1.5">
+            <button id="new-artifact-btn" class="px-3 py-1.5 bg-white hover:bg-neutral-200 text-black text-xs font-semibold rounded transition-colors flex items-center gap-1.5" title="New Artifact (Ctrl+N)">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New
+            </button>
+            <div class="w-px h-4 bg-neutral-700 mx-1"></div>
             <button id="text-wrap-btn" class="p-2 hover:bg-neutral-700 rounded text-sm text-neutral-300 transition-colors" title="Toggle Text Wrap">
                 Wrap: On
             </button>
@@ -248,9 +253,35 @@
         }
 
         /**
+         * Unsaved Changes Detection
+         */
+        function hasUnsavedChanges() {
+            const code = elements.codeEditor.value.trim();
+            const language = elements.languageSelect.value;
+            const title = elements.artifactTitle.value.trim();
+
+            // No active artifact — unsaved if there's any content at all
+            if (!state.activeArtifactId) {
+                return code.length > 0;
+            }
+
+            const artifact = state.activeArtifact;
+            // Active ID points to a deleted artifact — content is unsaved
+            if (!artifact) {
+                return code.length > 0;
+            }
+
+            // Compare current editor state with the saved version
+            return code !== artifact.code ||
+                   language !== artifact.language ||
+                   title !== artifact.title;
+        }
+
+        /**
          * DOM Elements
          */
         const elements = {
+            newArtifactBtn: document.getElementById('new-artifact-btn'),
             codeEditor: document.getElementById('code-editor'),
             previewFrame: document.getElementById('preview-frame'),
             languageSelect: document.getElementById('language-select'),
@@ -467,6 +498,11 @@
             if (e.key === 'Escape' && !elements.fullscreenModal.classList.contains('hidden')) {
                 closeFullscreen();
             }
+            // Ctrl+N / Cmd+N → New Artifact
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                handleNewArtifact();
+            }
         });
 
 
@@ -547,9 +583,23 @@
         elements.sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
 
         elements.newArtifactSidebarBtn.addEventListener('click', () => {
-            resetUI();
+            handleNewArtifact();
             toggleSidebar(false);
         });
+
+        /**
+         * New Artifact Button (Header)
+         */
+        function handleNewArtifact() {
+            if (hasUnsavedChanges()) {
+                if (!confirm('You have unsaved changes. Discard them and create a new artifact?')) {
+                    return;
+                }
+            }
+            resetUI();
+        }
+
+        elements.newArtifactBtn.addEventListener('click', handleNewArtifact);
 
         /**
          * Save Logic
