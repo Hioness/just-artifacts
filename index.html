@@ -62,6 +62,13 @@
         #toast.visible {
             opacity: 1;
         }
+        #language-select {
+            color-scheme: dark;
+        }
+        #language-select option {
+            background: #404040;
+            color: #e5e5e5;
+        }
     </style>
 </head>
 <body class="bg-neutral-950 h-screen flex flex-col overflow-hidden font-sans text-neutral-100">
@@ -300,7 +307,7 @@
          * Unsaved Changes Detection
          */
         function hasUnsavedChanges() {
-            const code = elements.codeEditor.value.trim();
+            const code = elements.codeEditor.value;
             const language = elements.languageSelect.value;
             const title = elements.artifactTitle.value.trim();
 
