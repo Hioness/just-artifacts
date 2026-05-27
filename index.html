@@ -62,6 +62,23 @@
         #toast.visible {
             opacity: 1;
         }
+        /* Confirm dialog */
+        #confirm-overlay {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease;
+        }
+        #confirm-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #confirm-dialog {
+            transform: scale(0.95);
+            transition: transform 0.15s ease;
+        }
+        #confirm-overlay.active #confirm-dialog {
+            transform: scale(1);
+        }
         #language-select {
             color-scheme: dark;
         }
@@ -195,6 +212,17 @@
 
     <!-- Toast notification for drag-and-drop feedback -->
     <div id="toast"></div>
+
+    <!-- Confirm dialog -->
+    <div id="confirm-overlay" class="fixed inset-0 flex items-center justify-center bg-black/60" style="z-index:110;">
+        <div id="confirm-dialog" class="bg-neutral-900 border border-neutral-700 rounded-xl p-6 w-80 shadow-2xl">
+            <p id="confirm-message" class="text-sm text-neutral-200 mb-5 leading-relaxed"></p>
+            <div class="flex justify-end gap-3">
+                <button id="confirm-cancel-btn" class="px-4 py-2 text-xs font-medium text-neutral-400 hover:text-neutral-200 bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors">Cancel</button>
+                <button id="confirm-ok-btn" class="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-500 rounded-lg transition-colors">Delete</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         /**
@@ -354,7 +382,41 @@
             fullscreenModal: document.getElementById('fullscreen-modal'),
             fullscreenFrame: document.getElementById('fullscreen-frame'),
             closeFullscreenBtn: document.getElementById('close-fullscreen-btn'),
+            confirmOverlay: document.getElementById('confirm-overlay'),
+            confirmMessage: document.getElementById('confirm-message'),
+            confirmCancelBtn: document.getElementById('confirm-cancel-btn'),
+            confirmOkBtn: document.getElementById('confirm-ok-btn'),
         };
+
+        let confirmCallback = null;
+
+        function showConfirmDialog(message, onConfirm) {
+            confirmCallback = onConfirm;
+            elements.confirmMessage.textContent = message;
+            elements.confirmOverlay.classList.add('active');
+            elements.confirmCancelBtn.focus();
+        }
+
+        function hideConfirmDialog() {
+            elements.confirmOverlay.classList.remove('active');
+            confirmCallback = null;
+        }
+
+        elements.confirmCancelBtn.addEventListener('click', hideConfirmDialog);
+
+        elements.confirmOkBtn.addEventListener('click', () => {
+            if (confirmCallback) {
+                confirmCallback();
+                confirmCallback = null;
+            }
+            hideConfirmDialog();
+        });
+
+        elements.confirmOverlay.addEventListener('click', (e) => {
+            if (e.target === elements.confirmOverlay) {
+                hideConfirmDialog();
+            }
+        });
 
         /**
          * Rendering Logic
@@ -567,6 +629,10 @@
         elements.closeFullscreenBtn.addEventListener('click', closeFullscreen);
 
         document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && elements.confirmOverlay.classList.contains('active')) {
+                hideConfirmDialog();
+                return;
+            }
             if (e.key === 'Escape' && !elements.fullscreenModal.classList.contains('hidden')) {
                 closeFullscreen();
             }
@@ -616,17 +682,17 @@
 
             state.artifacts.forEach(artifact => {
                 const item = document.createElement('div');
-                item.className = 'flex items-center justify-between p-2 hover:bg-neutral-700 rounded cursor-pointer transition-colors';
+                item.className = 'flex items-center justify-between gap-2 p-2 hover:bg-neutral-700 rounded cursor-pointer transition-colors';
                 if (state.activeArtifactId === artifact.id) {
                     item.classList.add('bg-neutral-800');
                 }
 
                 item.innerHTML = `
-                    <span class="text-sm font-medium text-neutral-300 truncate flex-1">${artifact.title}</span>
+                    <span class="text-sm font-medium text-neutral-300 truncate flex-1 min-w-0">${artifact.title}</span>
                     <div class="flex items-center gap-0.5 shrink-0">
                         <span class="text-[10px] text-neutral-600 mr-1 hidden sm:inline">${formatRelativeTime(artifact.updatedAt)}</span>
-                        <button class="item-menu-btn p-1 text-neutral-500 hover:text-neutral-300 rounded transition-colors" title="Options">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+                        <button class="item-menu-btn p-1 text-neutral-500 hover:text-red-400 rounded transition-colors" title="Delete">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                         </button>
                     </div>`;
 
@@ -641,14 +707,20 @@
                     }
                 });
 
-                // Three-dot menu → delete
+                // Delete button (hold Shift to skip confirmation)
                 const menuBtn = item.querySelector('.item-menu-btn');
                 menuBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    if (confirm(`Delete "${artifact.title}"?`)) {
-                        deleteArtifact(artifact.id);
+                    const artifactId = artifact.id;
+                    const doDelete = () => {
+                        deleteArtifact(artifactId);
                         if (state.activeArtifactId === null) resetUI();
                         updateSavedListUI();
+                    };
+                    if (e.shiftKey) {
+                        doDelete();
+                    } else {
+                        showConfirmDialog(`Delete "${artifact.title}"?`, doDelete);
                     }
                 });
 
