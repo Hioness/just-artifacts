@@ -219,7 +219,7 @@
             <p id="confirm-message" class="text-sm text-neutral-200 mb-5 leading-relaxed"></p>
             <div class="flex justify-end gap-3">
                 <button id="confirm-cancel-btn" class="px-4 py-2 text-xs font-medium text-neutral-400 hover:text-neutral-200 bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors">Cancel</button>
-                <button id="confirm-ok-btn" class="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-500 rounded-lg transition-colors">Delete</button>
+                <button id="confirm-ok-btn" class="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-500 rounded-lg transition-colors"><span id="confirm-ok-text">Delete</span></button>
             </div>
         </div>
     </div>
@@ -386,13 +386,15 @@
             confirmMessage: document.getElementById('confirm-message'),
             confirmCancelBtn: document.getElementById('confirm-cancel-btn'),
             confirmOkBtn: document.getElementById('confirm-ok-btn'),
+            confirmOkText: document.getElementById('confirm-ok-text'),
         };
 
         let confirmCallback = null;
 
-        function showConfirmDialog(message, onConfirm) {
+        function showConfirmDialog(message, onConfirm, okText = 'Delete') {
             confirmCallback = onConfirm;
             elements.confirmMessage.textContent = message;
+            elements.confirmOkText.textContent = okText;
             elements.confirmOverlay.classList.add('active');
             elements.confirmCancelBtn.focus();
         }
@@ -766,11 +768,14 @@
          */
         function handleNewArtifact() {
             if (hasUnsavedChanges()) {
-                if (!confirm('You have unsaved changes. Discard them and create a new artifact?')) {
-                    return;
-                }
+                showConfirmDialog(
+                    'You have unsaved changes. Discard them and create a new artifact?',
+                    () => { resetUI(); },
+                    'Discard'
+                );
+            } else {
+                resetUI();
             }
-            resetUI();
         }
 
         elements.newArtifactBtn.addEventListener('click', handleNewArtifact);
