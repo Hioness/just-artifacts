@@ -73,22 +73,25 @@
 </head>
 <body class="bg-neutral-950 h-screen flex flex-col overflow-hidden font-sans text-neutral-100">
 
-    <!-- Header -->
-    <header class="bg-neutral-950 border-b border-neutral-900 h-14 flex items-center justify-between px-4 shrink-0 z-20 relative">
-        <div class="flex items-center gap-2">
+    <!-- Header — Artifact Toolbar -->
+    <header class="bg-neutral-950 border-b border-neutral-900 h-14 flex items-center justify-between px-5 shrink-0 z-20 relative">
+        <!-- Left group: identity + content name -->
+        <div class="flex items-center gap-4">
             <h1 class="text-lg font-bold text-neutral-100">just artifacts</h1>
+            <div class="relative group flex items-center">
+                <input type="text" id="artifact-title" value="New_Artifact" class="text-sm font-medium text-neutral-200 border-b border-neutral-700 hover:border-neutral-500 focus:border-white focus:outline-none px-1 py-1 bg-transparent w-48 transition-colors" />
+                <span id="unsaved-indicator" class="ml-2 text-[10px] text-amber-400 font-medium opacity-0 transition-opacity whitespace-nowrap pointer-events-none">● unsaved</span>
+            </div>
         </div>
-        <div class="flex items-center gap-1.5">
-            <button id="new-artifact-btn" class="px-3 py-1.5 bg-white hover:bg-neutral-200 text-black text-xs font-semibold rounded transition-colors flex items-center gap-1.5" title="New Artifact (Ctrl+N)">
+
+        <!-- Right group: actions -->
+        <div class="flex items-center gap-3">
+            <button id="save-btn" class="px-3 py-1.5 bg-white hover:bg-neutral-200 text-black text-xs font-semibold rounded transition-colors shadow-sm" title="Save (Ctrl+S)">
+                Save
+            </button>
+            <button id="new-artifact-btn" class="px-3 py-1.5 bg-neutral-700 hover:bg-neutral-600 text-neutral-200 text-xs font-semibold rounded transition-colors flex items-center gap-1.5" title="New Artifact (Ctrl+N)">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 New
-            </button>
-            <div class="w-px h-4 bg-neutral-700 mx-1"></div>
-            <button id="text-wrap-btn" class="p-2 hover:bg-neutral-700 rounded text-sm text-neutral-300 transition-colors" title="Toggle Text Wrap">
-                Wrap: On
-            </button>
-            <button id="fullscreen-btn" class="p-2 hover:bg-neutral-700 rounded text-sm text-neutral-300 transition-colors" title="Fullscreen Preview">
-                Fullscreen
             </button>
         </div>
     </header>
@@ -100,10 +103,6 @@
         <nav id="icon-rail" class="w-12 bg-neutral-950 border-r border-neutral-900 flex flex-col items-center py-3 gap-2 shrink-0 z-30" aria-label="Sidebar navigation">
             <button id="rail-toggle-btn" class="p-1.5 hover:bg-neutral-700 rounded text-neutral-400 hover:text-neutral-100 transition-colors" title="Saved Artifacts (Ctrl+B)" aria-label="Toggle saved artifacts sidebar">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-            </button>
-            <div class="flex-1"></div>
-            <button id="rail-new-btn" class="p-1.5 hover:bg-neutral-700 rounded text-neutral-400 hover:text-neutral-100 transition-colors" title="New Artifact (Ctrl+N)" aria-label="Create new artifact">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             </button>
         </nav>
 
@@ -126,7 +125,17 @@
         <div class="flex-1 flex overflow-hidden min-w-0">
             <!-- Code Panel (Left, proportional) -->
             <div id="code-panel" class="h-full flex flex-col border-r border-neutral-900 bg-neutral-950 relative" style="width: 35%; min-width: 200px;">
-                <textarea id="code-editor" class="w-full h-full p-4 font-mono text-sm resize-none focus:outline-none bg-neutral-950 text-neutral-300 placeholder-neutral-600" spellcheck="false" placeholder="// Paste code or drag & drop a file..."></textarea>
+                <!-- Editor Controls Bar -->
+                <div class="h-9 bg-neutral-950 border-b border-neutral-900 flex items-center gap-2 px-3 shrink-0">
+                    <select id="language-select" class="text-xs border border-neutral-600 rounded px-2 py-1 bg-neutral-700 focus:outline-none focus:border-white text-neutral-200" title="Language">
+                        <option value="html">HTML</option>
+                        <option value="react">React</option>
+                    </select>
+                    <button id="text-wrap-btn" class="px-2 py-1 hover:bg-neutral-700 rounded text-xs text-neutral-400 transition-colors" title="Toggle Text Wrap">
+                        Wrap: On
+                    </button>
+                </div>
+                <textarea id="code-editor" class="w-full flex-1 p-4 font-mono text-sm resize-none focus:outline-none bg-neutral-950 text-neutral-300 placeholder-neutral-600" spellcheck="false" placeholder="// Paste code or drag & drop a file..."></textarea>
                 <!-- Drop overlay for drag-and-drop -->
                 <div id="drop-overlay" class="absolute inset-0 z-20 flex items-center justify-center bg-neutral-950/95 border-2 border-dashed border-green-500/50 m-2">
                     <div class="text-center">
@@ -162,30 +171,14 @@
                     <button class="device-btn px-3 py-1 text-xs font-medium rounded bg-neutral-700 text-neutral-200 border border-neutral-600" data-width="100%">Full Width</button>
                     <div class="h-4 w-px bg-neutral-600 mx-2"></div>
                     <input type="number" id="custom-width" placeholder="Width (px)" class="w-24 px-2 py-1 text-xs border border-neutral-600 rounded bg-neutral-700 text-neutral-200 focus:outline-none focus:border-white placeholder-neutral-500">
+                    <div class="h-4 w-px bg-neutral-600 mx-2"></div>
+                    <button id="fullscreen-btn" class="px-2 py-1 hover:bg-neutral-700 rounded text-xs text-neutral-400 transition-colors" title="Fullscreen Preview">
+                        Fullscreen
+                    </button>
                 </div>
             </div>
         </div>
     </main>
-
-    <!-- Footer -->
-    <footer class="bg-neutral-950 border-t border-neutral-900 h-14 flex items-center justify-between px-4 shrink-0 z-20">
-        <div class="flex items-center gap-4">
-            <div class="relative group">
-                <input type="text" id="artifact-title" value="New_Artifact" class="text-sm font-medium text-neutral-200 border-b border-transparent hover:border-neutral-500 focus:border-white focus:outline-none px-1 py-0.5 bg-transparent w-48 transition-colors" />
-                <span class="absolute -top-3 left-1 text-[10px] text-neutral-500 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Click to rename</span>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-3">
-            <select id="language-select" class="text-sm border border-neutral-600 rounded px-2 py-1 bg-neutral-700 focus:outline-none focus:border-white text-neutral-200">
-                <option value="html">HTML</option>
-                <option value="react">React</option>
-            </select>
-            <button id="save-btn" class="px-4 py-1.5 bg-white hover:bg-neutral-200 text-black text-sm font-medium rounded transition-colors shadow-sm flex items-center gap-2 border border-transparent">
-                <span>Save</span>
-            </button>
-        </div>
-    </footer>
 
     <!-- Fullscreen Modal -->
     <div id="fullscreen-modal" class="fixed inset-0 bg-black z-50 hidden flex flex-col">
@@ -331,6 +324,14 @@
                    title !== artifact.title;
         }
 
+        function updateUnsavedIndicator() {
+            if (hasUnsavedChanges()) {
+                elements.unsavedIndicator.style.opacity = '1';
+            } else {
+                elements.unsavedIndicator.style.opacity = '0';
+            }
+        }
+
         /**
          * DOM Elements
          */
@@ -342,11 +343,10 @@
             textWrapBtn: document.getElementById('text-wrap-btn'),
             artifactTitle: document.getElementById('artifact-title'),
             saveBtn: document.getElementById('save-btn'),
+            unsavedIndicator: document.getElementById('unsaved-indicator'),
             sidebar: document.getElementById('sidebar'),
             savedList: document.getElementById('saved-list'),
-            // Rail buttons (Option 2)
             railToggleBtn: document.getElementById('rail-toggle-btn'),
-            railNewBtn: document.getElementById('rail-new-btn'),
             previewWrapper: document.getElementById('preview-wrapper'),
             deviceButtons: document.querySelectorAll('.device-btn'),
             customWidthInput: document.getElementById('custom-width'),
@@ -425,7 +425,21 @@
         let debounceTimer;
         function debouncedUpdatePreview() {
             clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(updatePreview, 500); // 500ms delay
+            updateUnsavedIndicator(); // Update immediately on input
+            debounceTimer = setTimeout(() => {
+                updatePreview();
+                // Auto-save: only update existing artifacts, don't create new ones
+                if (state.activeArtifactId && state.activeArtifact) {
+                    const code = elements.codeEditor.value;
+                    const language = elements.languageSelect.value;
+                    const title = elements.artifactTitle.value.trim();
+                    if (title && title !== DEFAULT_TITLE) {
+                        saveCurrentArtifact(code, language, title);
+                        updateSavedListUI();
+                        updateUnsavedIndicator();
+                    }
+                }
+            }, 500); // 500ms delay
         }
 
         /**
@@ -446,6 +460,7 @@
             elements.languageSelect.value = artifact.language || 'html';
             elements.artifactTitle.value = artifact.title || DEFAULT_TITLE;
             updatePreview();
+            updateUnsavedIndicator();
         }
 
         function resetUI() {
@@ -454,6 +469,7 @@
             elements.artifactTitle.value = DEFAULT_TITLE;
             state.activeArtifactId = null; // Ensure no ID is set so next save creates new
             updatePreview();
+            updateUnsavedIndicator();
         }
 
         function toggleTextWrap() {
@@ -474,8 +490,11 @@
          */
         elements.codeEditor.addEventListener('input', debouncedUpdatePreview);
 
+        elements.artifactTitle.addEventListener('input', updateUnsavedIndicator);
+
         elements.languageSelect.addEventListener('change', () => {
             updatePreview();
+            updateUnsavedIndicator();
         });
 
         elements.textWrapBtn.addEventListener('click', toggleTextWrap);
@@ -560,6 +579,11 @@
             if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
                 e.preventDefault();
                 handleNewArtifact();
+            }
+            // Ctrl+S / Cmd+S → Save
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                elements.saveBtn.click();
             }
         });
 
@@ -664,8 +688,6 @@
 
         // Rail: hamburger toggles sidebar
         elements.railToggleBtn.addEventListener('click', () => toggleSidebar(!sidebarVisible));
-        // Rail: + creates new artifact
-        elements.railNewBtn.addEventListener('click', () => handleNewArtifact());
 
         /**
          * New Artifact Button (Header)
@@ -703,12 +725,13 @@
 
             saveCurrentArtifact(code, language, title);
             updateSavedListUI();
+            updateUnsavedIndicator();
 
             // Visual feedback
-            const originalText = elements.saveBtn.innerHTML;
-            elements.saveBtn.innerHTML = `<span>Saved!</span>`;
+            const originalText = elements.saveBtn.textContent;
+            elements.saveBtn.textContent = 'Saved!';
             setTimeout(() => {
-                elements.saveBtn.innerHTML = originalText;
+                elements.saveBtn.textContent = originalText;
             }, 1000);
         });
 
@@ -799,6 +822,7 @@
                 // Clear active artifact reference — drop replaces content
                 state.activeArtifactId = null;
                 updatePreview();
+                updateUnsavedIndicator();
             };
             reader.onerror = () => {
                 showToast('Error reading file. Try again.');
