@@ -171,11 +171,11 @@
             <div class="flex-1 h-full flex flex-col bg-neutral-950 min-w-0">
                 <!-- Iframe Container -->
                 <div class="flex-1 flex items-center justify-center p-8 overflow-hidden bg-neutral-950">
-                    <div id="preview-wrapper" class="w-full h-full bg-white shadow-2xl transition-all duration-300 relative">
-                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 text-neutral-400 text-sm">
-                            Preview Area (White Background)
+                    <div id="preview-wrapper" class="w-full h-full bg-neutral-800 shadow-2xl transition-all duration-300 relative">
+                        <div id="preview-placeholder" class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 text-neutral-500 text-sm">
+                            Preview Area
                         </div>
-                        <iframe id="preview-frame" class="w-full h-full border-0 relative z-10 bg-white" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
+                        <iframe id="preview-frame" class="w-full h-full border-0 relative z-10 bg-neutral-800" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
                     </div>
                 </div>
 
@@ -206,7 +206,7 @@
             </button>
         </div>
         <div class="flex-1 bg-black relative w-full h-full"> 
-             <iframe id="fullscreen-frame" class="w-full h-full border-0 bg-white" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
+             <iframe id="fullscreen-frame" class="w-full h-full border-0 bg-neutral-800" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
         </div>
     </div>
 
@@ -466,6 +466,26 @@
         function updatePreview() {
             const code = elements.codeEditor.value;
             const language = elements.languageSelect.value;
+            const hasCode = code.trim().length > 0;
+            const wrapper = elements.previewWrapper;
+            const frame = elements.previewFrame;
+            const placeholder = document.getElementById('preview-placeholder');
+
+            // Toggle background: dark gray when empty, white when there's code
+            if (hasCode) {
+                wrapper.classList.remove('bg-neutral-800');
+                wrapper.classList.add('bg-white');
+                frame.classList.remove('bg-neutral-800');
+                frame.classList.add('bg-white');
+                placeholder.style.display = 'none';
+            } else {
+                wrapper.classList.remove('bg-white');
+                wrapper.classList.add('bg-neutral-800');
+                frame.classList.remove('bg-white');
+                frame.classList.add('bg-neutral-800');
+                placeholder.style.display = '';
+            }
+
             let content = '';
 
             if (language === 'react') {
@@ -616,7 +636,20 @@
             elements.fullscreenModal.classList.remove('hidden');
             // Ensure content is synced
             const currentLang = elements.languageSelect.value;
-            const content = currentLang === 'react' ? getReactContent(elements.codeEditor.value) : getHTMLContent(elements.codeEditor.value);
+            const code = elements.codeEditor.value;
+            const hasCode = code.trim().length > 0;
+            const frame = elements.fullscreenFrame;
+
+            // Toggle background to match preview state
+            if (hasCode) {
+                frame.classList.remove('bg-neutral-800');
+                frame.classList.add('bg-white');
+            } else {
+                frame.classList.remove('bg-white');
+                frame.classList.add('bg-neutral-800');
+            }
+
+            const content = currentLang === 'react' ? getReactContent(code) : getHTMLContent(code);
             const blob = new Blob([content], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
             elements.fullscreenFrame.src = url;
