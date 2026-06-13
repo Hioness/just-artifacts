@@ -27,6 +27,8 @@ The interface follows a strict design language:
 
 ## Usage
 
+**Live site**: [just-artifacts.vercel.app](https://just-artifacts.vercel.app/)
+
 Simply open `index.html` in your web browser. No build step or server required.
 
 1. **Write or Paste Code**: Type in the left code panel, or drag & drop a file.
