@@ -4,37 +4,444 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Just Artifacts</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2">
-    <meta name="theme-color" content="#0a0a0a">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=2">
+    <meta name="theme-color" content="#1a1a1a">
     <style>
-        /* Custom scrollbar for better aesthetics in dark mode */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #404040;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #737373;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:           #1a1a1a;
+            --fg:           #ffffff;
+            --muted:        #888888;
+            --border:       #ffffff;
+            --border-dim:   #444444;
+            --pane-bg:      #111111;
+            --danger:       #cc3333;
+            --added-fg:     #bbf7d0;
+            --bw:           1px;
+            --mono:         'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            --sans:         system-ui, -apple-system, sans-serif;
         }
 
-        /* Hide scrollbar for Chrome, Safari and Opera */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
+        body {
+            background: var(--bg);
+            color: var(--fg);
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            line-height: 1.5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
-        /* Hide scrollbar for IE, Edge and Firefox */
-        .no-scrollbar {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
+
+        /* ── Scrollbar ───────────────────────────────────────────────── */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-dim); border-radius: 0; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* ── Buttons ─────────────────────────────────────────────────── */
+        .btn {
+            background: var(--bg);
+            color: var(--fg);
+            border: var(--bw) solid var(--border);
+            padding: 0.25rem 0.6rem;
+            font-family: var(--mono);
+            font-weight: bold;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            box-shadow: 2px 2px 0 var(--border);
+            outline: none;
         }
-        /* Drag and drop — overlay on code panel */
+        .btn:hover {
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0 var(--border);
+            background: var(--fg);
+            color: var(--bg);
+        }
+        .btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+        .btn:focus-visible {
+            outline: 2px dashed var(--fg);
+            outline-offset: 2px;
+        }
+        .btn-danger {
+            border-color: var(--danger);
+            color: var(--danger);
+            box-shadow: 2px 2px 0 var(--danger);
+        }
+        .btn-danger:hover {
+            background: var(--danger);
+            color: var(--fg);
+            box-shadow: 1px 1px 0 var(--danger);
+        }
+        .btn-active {
+            background: var(--fg);
+            color: var(--bg);
+        }
+        .btn-group {
+            display: inline-flex;
+            border: var(--bw) solid var(--border);
+            box-shadow: 2px 2px 0 var(--border);
+        }
+        .btn-group .btn {
+            box-shadow: none;
+            border: none;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.7rem;
+        }
+        .btn-group .btn:not(:last-child) {
+            border-right: var(--bw) solid var(--border);
+        }
+
+        .btn-toggle {
+            background: var(--bg);
+            color: var(--muted);
+            border: var(--bw) solid var(--border-dim);
+            padding: 0.2rem 0.5rem;
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            box-shadow: none;
+            outline: none;
+        }
+        .btn-toggle:hover {
+            background: var(--pane-bg);
+            color: var(--fg);
+            border-color: var(--border);
+        }
+        .btn-toggle:focus-visible {
+            outline: 2px dashed var(--fg);
+            outline-offset: 2px;
+        }
+
+        /* ── Inputs ──────────────────────────────────────────────────── */
+        input, select, textarea {
+            font-family: var(--mono);
+            background: var(--bg);
+            color: var(--fg);
+            border: var(--bw) solid var(--border-dim);
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            outline: none;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--border);
+        }
+        select option {
+            background: var(--bg);
+            color: var(--fg);
+        }
+
+        /* Hide number input spinners */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        /* ── Header ──────────────────────────────────────────────────── */
+        header {
+            border-bottom: var(--bw) solid var(--border);
+            padding: 0.6rem 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            background: var(--bg);
+            z-index: 20;
+        }
+        .header-title {
+            font-size: 1rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            text-transform: uppercase;
+        }
+
+        /* ── Main Layout ─────────────────────────────────────────────── */
+        main {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* ── Icon Rail ─────────────────────────────────────────────── */
+        #icon-rail {
+            width: 48px;
+            border-right: var(--bw) solid var(--border-dim);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.5rem 0;
+            gap: 0.5rem;
+            flex-shrink: 0;
+            background: var(--bg);
+            z-index: 30;
+        }
+        .rail-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            color: var(--muted);
+            border: var(--bw) solid transparent;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            padding: 0;
+        }
+        .rail-btn:hover {
+            color: var(--fg);
+            border-color: var(--border-dim);
+        }
+        .rail-btn.active {
+            background: var(--pane-bg);
+            color: var(--fg);
+            border-color: var(--border);
+        }
+
+        /* ── Sidebar ─────────────────────────────────────────────────── */
+        #sidebar {
+            background: var(--bg);
+            border-right: var(--bw) solid var(--border-dim);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-shrink: 0;
+            z-index: 20;
+            width: 0;
+            transition: width 0.25s ease-out;
+            will-change: width;
+        }
+        .sidebar-inner {
+            width: 256px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 256px;
+        }
+        .sidebar-header {
+            padding: 0.6rem 0.75rem;
+            border-bottom: var(--bw) solid var(--border-dim);
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            background: var(--bg);
+        }
+        .sidebar-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            border: var(--bw) solid transparent;
+        }
+        .sidebar-item:hover {
+            background: var(--pane-bg);
+            border-color: var(--border-dim);
+        }
+        .sidebar-item.active {
+            background: var(--pane-bg);
+            border-color: var(--border);
+        }
+        .sidebar-item-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            color: var(--fg);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+        .sidebar-item-meta {
+            font-size: 0.65rem;
+            color: var(--muted);
+            margin-right: 0.5rem;
+            text-transform: uppercase;
+        }
+        .sidebar-item-del {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            padding: 0.15rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.1s ease;
+        }
+        .sidebar-item-del:hover {
+            color: var(--danger);
+        }
+
+        /* ── Content Wrapper ─────────────────────────────────────────── */
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        /* ── Pane ────────────────────────────────────────────────────── */
+        .pane {
+            border: var(--bw) solid var(--border);
+            background: var(--pane-bg);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .pane-header {
+            border-bottom: var(--bw) solid var(--border-dim);
+            padding: 0.35rem 0.6rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg);
+            flex-shrink: 0;
+        }
+        .pane-header-meta {
+            font-size: 0.7rem;
+            color: var(--muted);
+            font-weight: normal;
+            text-transform: none;
+        }
+        .pane-body {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ── Code Panel ──────────────────────────────────────────────── */
+        #code-panel {
+            width: 35%;
+            min-width: 200px;
+            border-right: var(--bw) solid var(--border-dim);
+            display: flex;
+            flex-direction: column;
+            background: var(--bg);
+        }
+        #code-editor {
+            width: 100%;
+            height: 100%;
+            padding: 1rem;
+            font-family: var(--mono);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            resize: none;
+            background: var(--pane-bg);
+            color: var(--fg);
+            border: none;
+            border-bottom: var(--bw) solid var(--border-dim);
+            outline: none;
+            white-space: pre-wrap;
+        }
+        #code-editor::placeholder {
+            color: var(--border-dim);
+        }
+
+        /* ── Preview Panel ───────────────────────────────────────────── */
+        #preview-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg);
+            min-width: 0;
+        }
+        #preview-wrapper {
+            width: 100%;
+            height: 100%;
+            background: var(--pane-bg);
+            transition: width 0.3s ease;
+            position: relative;
+        }
+        #preview-wrapper.preview-bg-filled {
+            background: #ffffff;
+        }
+        #preview-wrapper.preview-bg-empty {
+            background: var(--pane-bg);
+        }
+        #preview-frame {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            position: relative;
+            z-index: 10;
+        }
+        #preview-frame.preview-bg-filled {
+            background: #ffffff;
+        }
+        #preview-frame.preview-bg-empty {
+            background: var(--pane-bg);
+        }
+        #preview-placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 0;
+            color: var(--muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* ── Device Bar ──────────────────────────────────────────────── */
+        .device-bar {
+            border-top: var(--bw) solid var(--border-dim);
+            padding: 0.5rem 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-shrink: 0;
+            background: var(--bg);
+        }
+        .device-bar-label {
+            font-size: 0.65rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-right: 0.5rem;
+        }
+
+        /* ── Overlays ────────────────────────────────────────────────── */
         #drop-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(17, 17, 17, 0.95);
+            border: 2px dashed var(--added-fg);
+            margin: 0.5rem;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.15s ease;
@@ -42,28 +449,45 @@
         #drop-overlay.active {
             opacity: 1;
         }
-        /* Toast notification */
+        #drop-overlay-text {
+            color: var(--added-fg);
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-align: center;
+            font-family: var(--mono);
+        }
+
         #toast {
             position: fixed;
             bottom: 2rem;
             left: 50%;
             transform: translateX(-50%);
-            background: #1a1a1a;
-            border: 1px solid #333;
-            color: #e0e0e0;
+            background: var(--bg);
+            border: var(--bw) solid var(--border);
+            color: var(--fg);
             padding: 0.6rem 1.2rem;
-            border-radius: 8px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             z-index: 100;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.2s;
+            text-transform: uppercase;
+            box-shadow: 2px 2px 0 var(--border);
+            font-family: var(--mono);
         }
         #toast.visible {
             opacity: 1;
         }
-        /* Confirm dialog */
+
         #confirm-overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 110;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.15s ease;
@@ -73,153 +497,216 @@
             pointer-events: auto;
         }
         #confirm-dialog {
+            background: var(--bg);
+            border: var(--bw) solid var(--border);
+            padding: 1.5rem;
+            width: 320px;
+            box-shadow: 4px 4px 0 var(--border);
             transform: scale(0.95);
             transition: transform 0.15s ease;
         }
         #confirm-overlay.active #confirm-dialog {
             transform: scale(1);
         }
-        #language-select {
-            color-scheme: dark;
+        #confirm-message {
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+            color: var(--fg);
+            font-family: var(--mono);
         }
-        #language-select option {
-            background: #404040;
-            color: #e5e5e5;
+
+        #fullscreen-modal {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 50;
+            display: none;
+            flex-direction: column;
+        }
+        #fullscreen-modal:not(.hidden) {
+            display: flex;
+        }
+        .fullscreen-controls {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .fullscreen-controls:hover {
+            opacity: 1;
+        }
+        .fullscreen-hint {
+            font-size: 0.65rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            background: rgba(26, 26, 26, 0.9);
+            padding: 0.25rem 0.5rem;
+            border: var(--bw) solid var(--border-dim);
+            font-family: var(--mono);
+        }
+        #fullscreen-frame {
+            flex: 1;
+            border: 0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* ── Empty States ────────────────────────────────────────────── */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+            color: var(--muted);
+            gap: 0.75rem;
+        }
+        .empty-state-icon {
+            opacity: 0.3;
+        }
+        .empty-state-text {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-family: var(--mono);
+        }
+        .empty-state-sub {
+            font-size: 0.65rem;
+            color: var(--border-dim);
+            text-transform: uppercase;
+            font-family: var(--mono);
         }
     </style>
 </head>
-<body class="bg-neutral-950 h-screen flex flex-col overflow-hidden font-sans text-neutral-100">
+<body>
 
     <!-- Header — Artifact Toolbar -->
-    <header class="bg-neutral-950 border-b border-neutral-900 h-14 flex items-center justify-between px-5 shrink-0 z-20 relative">
-        <!-- Left group: identity + content name -->
-        <div class="flex items-center gap-4">
-            <h1 class="text-lg font-bold text-neutral-100">just artifacts</h1>
-            <div class="relative group flex items-center">
-                <input type="text" id="artifact-title" value="New_Artifact" class="text-sm font-medium text-neutral-200 border-b border-neutral-700 hover:border-neutral-500 focus:border-white focus:outline-none px-1 py-1 bg-transparent w-48 transition-colors" />
-                <span id="unsaved-indicator" class="ml-2 text-[10px] text-amber-400 font-medium opacity-0 transition-opacity whitespace-nowrap pointer-events-none">● unsaved</span>
+    <header>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <h1 class="header-title">Just Artifacts</h1>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <input type="text" id="artifact-title" value="New_Artifact" style="width: 180px; background: transparent; border: var(--bw) solid var(--border-dim); padding: 0.25rem 0.5rem; font-size: 0.75rem; color: var(--fg); text-transform: uppercase; font-weight: bold;" />
+                <span id="unsaved-indicator" style="font-size: 0.65rem; color: var(--fg); opacity: 0; transition: opacity 0.2s; font-weight: 900; white-space: nowrap; pointer-events: none;">● UNSAVED</span>
             </div>
         </div>
 
-        <!-- Right group: actions -->
-        <div class="flex items-center gap-3">
-            <button id="save-btn" class="px-3 py-1.5 bg-white hover:bg-neutral-200 text-black text-xs font-semibold rounded transition-colors shadow-sm" title="Save (Ctrl+S)">
-                Save
-            </button>
-            <button id="new-artifact-btn" class="px-3 py-1.5 bg-neutral-700 hover:bg-neutral-600 text-neutral-200 text-xs font-semibold rounded transition-colors flex items-center gap-1.5" title="New Artifact (Ctrl+N)">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                New
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <button id="save-btn" class="btn" title="Save (Ctrl+S)">Save</button>
+            <button id="new-artifact-btn" class="btn" title="New Artifact (Ctrl+N)">
+                <span style="display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    New
+                </span>
             </button>
         </div>
     </header>
 
     <!-- Main Content Area -->
-    <main class="flex-1 flex overflow-hidden">
+    <main>
 
-        <!-- Icon Rail — always visible, no animation needed. The core anti-jank strategy. -->
-        <nav id="icon-rail" class="w-12 bg-neutral-950 border-r border-neutral-900 flex flex-col items-center py-3 gap-2 shrink-0 z-30" aria-label="Sidebar navigation">
-            <button id="rail-toggle-btn" class="p-1.5 hover:bg-neutral-700 rounded text-neutral-400 hover:text-neutral-100 transition-colors" title="Saved Artifacts (Ctrl+B)" aria-label="Toggle saved artifacts sidebar">
+        <!-- Icon Rail -->
+        <nav id="icon-rail" aria-label="Sidebar navigation">
+            <button id="rail-toggle-btn" class="rail-btn" title="Saved Artifacts (Ctrl+B)" aria-label="Toggle saved artifacts sidebar">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
             </button>
         </nav>
 
-        <!-- Sidebar Panel — flex item, width animation. Pushes content, no overlay. -->
-        <aside id="sidebar" class="bg-neutral-950 border-r border-neutral-900 flex flex-col overflow-hidden shrink-0 z-20" style="width: 0; transition: width 250ms ease-out; will-change: width;">
-            <!-- Inner wrapper: fixed 256px content inside the animated container -->
-            <div class="w-64 flex flex-col flex-1 min-w-64">
-                <div class="p-4 border-b border-neutral-900 bg-neutral-950">
-                    <h2 class="font-semibold text-neutral-200 whitespace-nowrap">Saved Artifacts</h2>
+        <!-- Sidebar Panel -->
+        <aside id="sidebar">
+            <div class="sidebar-inner">
+                <div class="sidebar-header">
+                    Saved Artifacts
                 </div>
-                <div id="saved-list" class="flex-1 overflow-y-auto p-2 space-y-1">
+                <div id="saved-list" class="sidebar-list">
                     <!-- Saved items injected here -->
                 </div>
             </div>
         </aside>
 
-        <!-- No overlay — sidebar pushes content, nothing is hidden -->
-
-        <!-- Content wrapper: code + preview panels share the remaining space -->
-        <div class="flex-1 flex overflow-hidden min-w-0">
-            <!-- Code Panel (Left, proportional) -->
-            <div id="code-panel" class="h-full flex flex-col border-r border-neutral-900 bg-neutral-950 relative" style="width: 35%; min-width: 200px;">
-                <!-- Editor Controls Bar -->
-                <div class="h-9 bg-neutral-950 border-b border-neutral-900 flex items-center gap-2 px-3 shrink-0">
-                    <select id="language-select" class="text-xs border border-neutral-600 rounded px-2 py-1 bg-neutral-700 focus:outline-none focus:border-white text-neutral-200" title="Language">
-                        <option value="html">HTML</option>
-                        <option value="react">React</option>
-                    </select>
-                    <button id="text-wrap-btn" class="px-2 py-1 hover:bg-neutral-700 rounded text-xs text-neutral-400 transition-colors" title="Toggle Text Wrap">
-                        Wrap: On
-                    </button>
+        <!-- Content wrapper: code + preview panels -->
+        <div class="content-wrapper">
+            <!-- Code Panel -->
+            <div id="code-panel">
+                <div class="pane-header">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <select id="language-select" style="padding: 0.2rem 0.5rem; font-size: 0.7rem; background: var(--bg); border: var(--bw) solid var(--border-dim); color: var(--fg); cursor: pointer; text-transform: uppercase; font-weight: bold;">
+                            <option value="html">HTML</option>
+                            <option value="react">React</option>
+                        </select>
+                        <button id="text-wrap-btn" class="btn-toggle" title="Toggle Text Wrap">Wrap: On</button>
+                    </div>
                 </div>
-                <textarea id="code-editor" class="w-full flex-1 p-4 font-mono text-sm resize-none focus:outline-none bg-neutral-950 text-neutral-300 placeholder-neutral-600" spellcheck="false" placeholder="// Paste code or drag & drop a file..."></textarea>
-                <!-- Drop overlay for drag-and-drop -->
-                <div id="drop-overlay" class="absolute inset-0 z-20 flex items-center justify-center bg-neutral-950/95 border-2 border-dashed border-green-500/50 m-2">
-                    <div class="text-center">
-                        <svg class="mx-auto mb-2" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="17 8 12 3 7 8"/>
-                            <line x1="12" y1="3" x2="12" y2="15"/>
-                        </svg>
-                        <p class="text-green-400 text-sm font-medium">Drop file to load</p>
-                        <p class="text-neutral-500 text-xs mt-1">.html .jsx .tsx .css .js .txt</p>
+                <div class="pane-body">
+                    <textarea id="code-editor" spellcheck="false" placeholder="// Paste code or drag & drop a file..."></textarea>
+                    <!-- Drop overlay -->
+                    <div id="drop-overlay">
+                        <div id="drop-overlay-text">
+                            <svg style="display: block; margin: 0 auto 0.5rem;" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--added-fg)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            Drop file to load
+                            <div style="font-size: 0.65rem; color: var(--muted); margin-top: 0.5rem; text-transform: uppercase; letter-spacing: 0.1em;">.html .jsx .tsx .css .js .txt</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Preview Panel (Right, takes remaining space) -->
-            <div class="flex-1 h-full flex flex-col bg-neutral-950 min-w-0">
-                <!-- Iframe Container -->
-                <div class="flex-1 flex items-center justify-center p-8 overflow-hidden bg-neutral-950">
-                    <div id="preview-wrapper" class="w-full h-full bg-neutral-800 shadow-2xl transition-all duration-300 relative">
-                        <div id="preview-placeholder" class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 text-neutral-500 text-sm">
-                            Preview Area
-                        </div>
-                        <iframe id="preview-frame" class="w-full h-full border-0 relative z-10 bg-neutral-800" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
+            <!-- Preview Panel -->
+            <div id="preview-panel">
+                <div class="pane-body" style="padding: 1rem; display: flex; align-items: center; justify-content: center;">
+                    <div id="preview-wrapper" class="preview-bg-empty">
+                        <div id="preview-placeholder">Preview Area</div>
+                        <iframe id="preview-frame" class="preview-bg-empty" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
                     </div>
                 </div>
 
                 <!-- Device Presets Bar -->
-                <div class="h-12 bg-neutral-950 border-t border-neutral-900 flex items-center justify-center gap-2 px-4 shrink-0">
-                    <span class="text-xs text-neutral-400 font-medium mr-2">VIEWPORT:</span>
-                    <button class="device-btn px-3 py-1 text-xs font-medium rounded hover:bg-neutral-700 text-neutral-400 border border-transparent hover:border-neutral-600 transition-colors" data-width="375px">Mobile (375px)</button>
-                    <button class="device-btn px-3 py-1 text-xs font-medium rounded hover:bg-neutral-700 text-neutral-400 border border-transparent hover:border-neutral-600 transition-colors" data-width="768px">Tablet (768px)</button>
-                    <button class="device-btn px-3 py-1 text-xs font-medium rounded hover:bg-neutral-700 text-neutral-400 border border-transparent hover:border-neutral-600 transition-colors" data-width="1024px">Desktop (1024px)</button>
-                    <button class="device-btn px-3 py-1 text-xs font-medium rounded bg-neutral-700 text-neutral-200 border border-neutral-600" data-width="100%">Full Width</button>
-                    <div class="h-4 w-px bg-neutral-600 mx-2"></div>
-                    <input type="number" id="custom-width" placeholder="Width (px)" class="w-24 px-2 py-1 text-xs border border-neutral-600 rounded bg-neutral-700 text-neutral-200 focus:outline-none focus:border-white placeholder-neutral-500">
-                    <div class="h-4 w-px bg-neutral-600 mx-2"></div>
-                    <button id="fullscreen-btn" class="px-2 py-1 hover:bg-neutral-700 rounded text-xs text-neutral-400 transition-colors" title="Fullscreen Preview">
-                        Fullscreen
-                    </button>
+                <div class="device-bar">
+                    <span class="device-bar-label">Viewport:</span>
+                    <button class="device-btn btn" data-width="375px">Mobile (375px)</button>
+                    <button class="device-btn btn" data-width="768px">Tablet (768px)</button>
+                    <button class="device-btn btn" data-width="1024px">Desktop (1024px)</button>
+                    <button class="device-btn btn btn-active" data-width="100%">Full Width</button>
+                    <div style="width: 1px; height: 1rem; background: var(--border-dim); margin: 0 0.5rem;"></div>
+                    <input type="number" id="custom-width" placeholder="Width (px)" style="width: 100px; font-size: 0.7rem; padding: 0.2rem 0.5rem;">
+                    <div style="width: 1px; height: 1rem; background: var(--border-dim); margin: 0 0.5rem;"></div>
+                    <button id="fullscreen-btn" class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">Fullscreen</button>
                 </div>
             </div>
         </div>
     </main>
 
     <!-- Fullscreen Modal -->
-    <div id="fullscreen-modal" class="fixed inset-0 bg-black z-50 hidden flex flex-col">
-        <div class="absolute top-4 right-4 z-50 flex items-center gap-3 opacity-0 hover:opacity-100 transition-opacity duration-300">
-            <span class="text-neutral-400 text-xs bg-black/80 px-2 py-1 rounded shadow">Press ESC to exit</span>
-            <button id="close-fullscreen-btn" class="text-neutral-400 hover:text-white p-2 bg-black/80 rounded shadow transition-colors">
+    <div id="fullscreen-modal" class="hidden">
+        <div class="fullscreen-controls">
+            <span class="fullscreen-hint">Press ESC to exit</span>
+            <button id="close-fullscreen-btn" class="btn" style="padding: 0.25rem;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
         </div>
-        <div class="flex-1 bg-black relative w-full h-full"> 
-             <iframe id="fullscreen-frame" class="w-full h-full border-0 bg-neutral-800" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
-        </div>
+        <iframe id="fullscreen-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
     </div>
 
-    <!-- Toast notification for drag-and-drop feedback -->
+    <!-- Toast -->
     <div id="toast"></div>
 
-    <!-- Confirm dialog -->
-    <div id="confirm-overlay" class="fixed inset-0 flex items-center justify-center bg-black/60" style="z-index:110;">
-        <div id="confirm-dialog" class="bg-neutral-900 border border-neutral-700 rounded-xl p-6 w-80 shadow-2xl">
-            <p id="confirm-message" class="text-sm text-neutral-200 mb-5 leading-relaxed"></p>
-            <div class="flex justify-end gap-3">
-                <button id="confirm-cancel-btn" class="px-4 py-2 text-xs font-medium text-neutral-400 hover:text-neutral-200 bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors">Cancel</button>
-                <button id="confirm-ok-btn" class="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-500 rounded-lg transition-colors"><span id="confirm-ok-text">Delete</span></button>
+    <!-- Confirm Dialog -->
+    <div id="confirm-overlay">
+        <div id="confirm-dialog">
+            <p id="confirm-message"></p>
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button id="confirm-cancel-btn" class="btn" style="border-color: var(--border-dim); color: var(--muted);">Cancel</button>
+                <button id="confirm-ok-btn" class="btn btn-danger"><span id="confirm-ok-text">Delete</span></button>
             </div>
         </div>
     </div>
@@ -473,16 +960,16 @@
 
             // Toggle background: dark gray when empty, white when there's code
             if (hasCode) {
-                wrapper.classList.remove('bg-neutral-800');
-                wrapper.classList.add('bg-white');
-                frame.classList.remove('bg-neutral-800');
-                frame.classList.add('bg-white');
+                wrapper.classList.remove('preview-bg-empty');
+                wrapper.classList.add('preview-bg-filled');
+                frame.classList.remove('preview-bg-empty');
+                frame.classList.add('preview-bg-filled');
                 placeholder.style.display = 'none';
             } else {
-                wrapper.classList.remove('bg-white');
-                wrapper.classList.add('bg-neutral-800');
-                frame.classList.remove('bg-white');
-                frame.classList.add('bg-neutral-800');
+                wrapper.classList.remove('preview-bg-filled');
+                wrapper.classList.add('preview-bg-empty');
+                frame.classList.remove('preview-bg-filled');
+                frame.classList.add('preview-bg-empty');
                 placeholder.style.display = '';
             }
 
@@ -589,22 +1076,20 @@
         function setPreviewWidth(width) {
             elements.previewWrapper.style.width = width;
 
+            // Update input value to show current width
+            if (width === '100%') {
+                elements.customWidthInput.value = '';
+            } else {
+                elements.customWidthInput.value = parseInt(width);
+            }
+
             // Update UI state
             elements.deviceButtons.forEach(btn => {
                 const btnWidth = btn.dataset.width;
                 if (btnWidth === width) {
-                    // Active state (Dark Mode)
-                    btn.classList.add('bg-neutral-600', 'border-neutral-500', 'text-neutral-100');
-                    btn.classList.remove('bg-neutral-700', 'border-transparent', 'text-neutral-400', 'hover:bg-neutral-700');
+                    btn.classList.add('btn-active');
                 } else {
-                    // Inactive state (Dark Mode)
-                    btn.classList.remove('bg-neutral-600', 'border-neutral-500', 'text-neutral-100');
-                    btn.classList.add('bg-neutral-700', 'border-transparent', 'text-neutral-400', 'hover:bg-neutral-700');
-                    if (width === '100%' && btn.dataset.width === '100%') {
-                         // Full Width match
-                         btn.classList.add('bg-neutral-600', 'border-neutral-500', 'text-neutral-100');
-                         btn.classList.remove('bg-neutral-700', 'border-transparent', 'text-neutral-400', 'hover:bg-neutral-700');
-                    }
+                    btn.classList.remove('btn-active');
                 }
             });
         }
@@ -613,7 +1098,6 @@
             btn.addEventListener('click', () => {
                 const width = btn.dataset.width;
                 setPreviewWidth(width);
-                elements.customWidthInput.value = ''; // Clear custom input
             });
         });
 
@@ -621,10 +1105,9 @@
             const val = e.target.value;
             if (val) {
                 setPreviewWidth(val + 'px');
-                // Deselect buttons logic handled in setPreviewWidth if matched, but here we likely want to clear active classes
-                 elements.deviceButtons.forEach(btn => {
-                    btn.classList.remove('bg-neutral-600', 'border-neutral-500', 'text-neutral-100');
-                    btn.classList.add('bg-neutral-700', 'border-transparent', 'text-neutral-400');
+                // Deselect buttons
+                elements.deviceButtons.forEach(btn => {
+                    btn.classList.remove('btn-active');
                 });
             }
         });
@@ -642,11 +1125,11 @@
 
             // Toggle background to match preview state
             if (hasCode) {
-                frame.classList.remove('bg-neutral-800');
-                frame.classList.add('bg-white');
+                frame.classList.remove('preview-bg-empty');
+                frame.classList.add('preview-bg-filled');
             } else {
-                frame.classList.remove('bg-white');
-                frame.classList.add('bg-neutral-800');
+                frame.classList.remove('preview-bg-filled');
+                frame.classList.add('preview-bg-empty');
             }
 
             const content = currentLang === 'react' ? getReactContent(code) : getHTMLContent(code);
@@ -688,11 +1171,8 @@
             }
         });
 
-
         /**
-         * Sidebar & Saved Artifacts Logic — Option 2: Icon Rail
-         * No overlay, no transform. Sidebar width animates from 0 → 256px.
-         * The icon rail is always visible — no open/close jank.
+         * Sidebar & Saved Artifacts Logic
          */
         let sidebarVisible = false;
 
@@ -702,38 +1182,38 @@
 
             if (state.artifacts.length === 0) {
                 list.innerHTML = `
-                    <div class="flex flex-col items-center justify-center py-8 text-center px-4">
-                        <svg class="mb-3 opacity-30" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <div class="empty-state">
+                        <svg class="empty-state-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
                             <line x1="12" y1="18" x2="12" y2="12"></line>
                             <line x1="9" y1="15" x2="15" y2="15"></line>
                         </svg>
-                        <p class="text-sm text-neutral-500">No saved artifacts</p>
-                        <p class="text-xs text-neutral-600 mt-1">Write code, click Save, and it appears here</p>
+                        <p class="empty-state-text">No saved artifacts</p>
+                        <p class="empty-state-sub">Write code, click Save, and it appears here</p>
                     </div>`;
                 return;
             }
 
             state.artifacts.forEach(artifact => {
                 const item = document.createElement('div');
-                item.className = 'flex items-center justify-between gap-2 p-2 hover:bg-neutral-700 rounded cursor-pointer transition-colors';
+                item.className = 'sidebar-item';
                 if (state.activeArtifactId === artifact.id) {
-                    item.classList.add('bg-neutral-800');
+                    item.classList.add('active');
                 }
 
                 item.innerHTML = `
-                    <span class="text-sm font-medium text-neutral-300 truncate flex-1 min-w-0">${artifact.title}</span>
-                    <div class="flex items-center gap-0.5 shrink-0">
-                        <span class="text-[10px] text-neutral-600 mr-1 hidden sm:inline">${formatRelativeTime(artifact.updatedAt)}</span>
-                        <button class="item-menu-btn p-1 text-neutral-500 hover:text-red-400 rounded transition-colors" title="Delete">
+                    <span class="sidebar-item-title">${artifact.title}</span>
+                    <div style="display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0;">
+                        <span class="sidebar-item-meta">${formatRelativeTime(artifact.updatedAt)}</span>
+                        <button class="sidebar-item-del" title="Delete">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                         </button>
                     </div>`;
 
                 // Click to load
                 item.addEventListener('click', (e) => {
-                    if (e.target.closest('.item-menu-btn')) return;
+                    if (e.target.closest('.sidebar-item-del')) return;
                     setActiveArtifact(artifact.id);
                     loadArtifactToUI(artifact);
                     updateSavedListUI();
@@ -743,7 +1223,7 @@
                 });
 
                 // Delete button (hold Shift to skip confirmation)
-                const menuBtn = item.querySelector('.item-menu-btn');
+                const menuBtn = item.querySelector('.sidebar-item-del');
                 menuBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const artifactId = artifact.id;
@@ -787,9 +1267,9 @@
 
             // Highlight the hamburger button in the rail when sidebar is open
             if (show) {
-                elements.railToggleBtn.classList.add('bg-neutral-700', 'text-neutral-200');
+                elements.railToggleBtn.classList.add('active');
             } else {
-                elements.railToggleBtn.classList.remove('bg-neutral-700', 'text-neutral-200');
+                elements.railToggleBtn.classList.remove('active');
             }
         }
 
@@ -855,11 +1335,6 @@
 
         /**
          * Drag & Drop File Loading
-         * -------------------------
-         * Supports: .html .htm .jsx .tsx .css .js .ts .txt .json .md .xml .svg .csv
-         * Rejects: binary files (images, PDFs, etc.), files > 1MB
-         * Auto-detects language from extension (.jsx/.tsx → React, rest → HTML)
-         * Sets editor title to filename (without extension)
          */
         const ALLOWED_EXTENSIONS = new Set([
             '.html', '.htm', '.jsx', '.tsx', '.css', '.js', '.ts',
@@ -979,6 +1454,7 @@
         loadState();
         updateSavedListUI(); // Load sidebar list
         initUI();
+        setPreviewWidth('100%'); // Sync width input with default state
         console.log("State loaded:", state);
 
     </script>

@@ -1,0 +1,25 @@
+# ── Temp Workspace ──────────────────────────────────────────
+# Temporary/exploratory outputs go in temp/. It is a scratch
+# workspace, not a deliverable. Documented in AGENTS.md.
+/temp/
+
+# ── OS / Editor ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ── Build / Misc ──────────────────────────────────────────────
+node_modules/
+dist/
+build/
+*.log
+.env
+.env.local
