@@ -637,10 +637,8 @@
             <div id="code-panel">
                 <div class="pane-header">
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <select id="language-select" style="padding: 0.2rem 0.5rem; font-size: 0.7rem; background: var(--bg); border: var(--bw) solid var(--border-dim); color: var(--fg); cursor: pointer; text-transform: uppercase; font-weight: bold;">
-                            <option value="html">HTML</option>
-                            <option value="react">React</option>
-                        </select>
+                        <input type="hidden" id="language-select" value="html" />
+                        <span style="font-size: 0.7rem; text-transform: uppercase; font-weight: bold; color: var(--fg);">HTML</span>
                         <button id="text-wrap-btn" class="btn-toggle" title="Toggle Text Wrap">Wrap: On</button>
                     </div>
                 </div>
@@ -655,7 +653,7 @@
                                 <line x1="12" y1="3" x2="12" y2="15"/>
                             </svg>
                             Drop file to load
-                            <div style="font-size: 0.65rem; color: var(--muted); margin-top: 0.5rem; text-transform: uppercase; letter-spacing: 0.1em;">.html .jsx .tsx .css .js .txt</div>
+                            <div style="font-size: 0.65rem; color: var(--muted); margin-top: 0.5rem; text-transform: uppercase; letter-spacing: 0.1em;">.html .css .js .txt</div>
                         </div>
                     </div>
                 </div>
@@ -739,7 +737,10 @@
                 const raw = localStorage.getItem(STORAGE_KEY);
                 if (raw) {
                     const parsed = JSON.parse(raw);
-                    state.artifacts = parsed.artifacts || [];
+                    state.artifacts = (parsed.artifacts || []).map(a => ({
+                        ...a,
+                        language: a.language === 'react' ? 'html' : (a.language || 'html')
+                    }));
                     state.activeArtifactId = parsed.activeArtifactId || null;
                 }
             } catch (e) {
@@ -914,45 +915,8 @@
             return code;
         }
 
-        function getReactContent(code) {
-            return `<!DOCTYPE html>
-<html>
-<head>
-  <script src="https://unpkg.com/react@18/umd/react.development.js"><\/script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"><\/script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>
-  <style>
-    body { margin: 0; font-family: system-ui, sans-serif; }
-  </style>
-</head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel">
-    ${code}
-
-    // Auto-render logic
-    try {
-        const rootElement = document.getElementById('root');
-        if (typeof App !== 'undefined') {
-            const root = ReactDOM.createRoot(rootElement);
-            root.render(<App />);
-        } else {
-            // If user didn't define App, maybe they just wrote JSX or something else?
-            // We'll leave it to them, or we could try to render whatever they return.
-            // For now, assume App component.
-        }
-    } catch (e) {
-        console.error("React render error:", e);
-        document.body.innerHTML += '<pre style="color:red; padding:1rem;">' + e.message + '</pre>';
-    }
-  <\/script>
-</body>
-</html>`;
-        }
-
         function updatePreview() {
             const code = elements.codeEditor.value;
-            const language = elements.languageSelect.value;
             const hasCode = code.trim().length > 0;
             const wrapper = elements.previewWrapper;
             const frame = elements.previewFrame;
@@ -973,13 +937,7 @@
                 placeholder.style.display = '';
             }
 
-            let content = '';
-
-            if (language === 'react') {
-                content = getReactContent(code);
-            } else {
-                content = getHTMLContent(code);
-            }
+            const content = getHTMLContent(code);
 
             const blob = new Blob([content], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
@@ -1028,7 +986,7 @@
 
         function loadArtifactToUI(artifact) {
             elements.codeEditor.value = artifact.code || '';
-            elements.languageSelect.value = artifact.language || 'html';
+            elements.languageSelect.value = 'html';
             elements.artifactTitle.value = artifact.title || DEFAULT_TITLE;
             updatePreview();
             updateUnsavedIndicator();
@@ -1062,11 +1020,6 @@
         elements.codeEditor.addEventListener('input', debouncedUpdatePreview);
 
         elements.artifactTitle.addEventListener('input', updateUnsavedIndicator);
-
-        elements.languageSelect.addEventListener('change', () => {
-            updatePreview();
-            updateUnsavedIndicator();
-        });
 
         elements.textWrapBtn.addEventListener('click', toggleTextWrap);
 
@@ -1118,7 +1071,6 @@
         function openFullscreen() {
             elements.fullscreenModal.classList.remove('hidden');
             // Ensure content is synced
-            const currentLang = elements.languageSelect.value;
             const code = elements.codeEditor.value;
             const hasCode = code.trim().length > 0;
             const frame = elements.fullscreenFrame;
@@ -1132,7 +1084,7 @@
                 frame.classList.add('preview-bg-empty');
             }
 
-            const content = currentLang === 'react' ? getReactContent(code) : getHTMLContent(code);
+            const content = getHTMLContent(code);
             const blob = new Blob([content], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
             elements.fullscreenFrame.src = url;
@@ -1337,13 +1289,9 @@
          * Drag & Drop File Loading
          */
         const ALLOWED_EXTENSIONS = new Set([
-            '.html', '.htm', '.jsx', '.tsx', '.css', '.js', '.ts',
+            '.html', '.htm', '.css', '.js', '.ts',
             '.txt', '.json', '.md', '.xml', '.svg', '.csv'
         ]);
-        const LANG_MAP = {
-            '.jsx': 'react',
-            '.tsx': 'react',
-        };
         const MAX_FILE_SIZE = 1024 * 1024; // 1MB
 
         const dropOverlay = document.getElementById('drop-overlay');
@@ -1358,11 +1306,6 @@
             toastTimer = setTimeout(() => {
                 toast.classList.remove('visible');
             }, duration);
-        }
-
-        function detectLanguage(filename) {
-            const ext = '.' + filename.split('.').pop().toLowerCase();
-            return LANG_MAP[ext] || 'html';
         }
 
         function isValidFile(file) {
@@ -1397,8 +1340,6 @@
             const reader = new FileReader();
             reader.onload = () => {
                 elements.codeEditor.value = reader.result;
-                // Auto-detect language from file extension
-                elements.languageSelect.value = detectLanguage(file.name);
                 // Set artifact title to filename (minus extension)
                 const titleWithoutExt = file.name.replace(/\.[^/.]+$/, '');
                 if (titleWithoutExt) {

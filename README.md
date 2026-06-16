@@ -6,9 +6,8 @@ A single-page web application for previewing AI-generated code artifacts. This i
 
 ## Features
 
-- **Code Preview**: Live preview of HTML/CSS/JS or React code.
-- **Language Support**: Toggle between standard HTML and React (with Babel/React 18).
-- **Drag & Drop**: Drop `.html`, `.jsx`, `.css`, and other text files directly onto the editor.
+- **Code Preview**: Live preview of HTML/CSS/JS code.
+- **Drag & Drop**: Drop `.html`, `.css`, and other text files directly onto the editor.
 - **Device Presets**: Test responsiveness with Mobile, Tablet, Desktop, and Custom width presets.
 - **Fullscreen Mode**: View artifacts in a distraction-free fullscreen overlay.
 - **Local Persistence**: Save, load, and delete artifacts using browser `localStorage`.
@@ -32,14 +31,12 @@ The interface follows a strict design language:
 Simply open `index.html` in your web browser. No build step or server required.
 
 1. **Write or Paste Code**: Type in the left code panel, or drag & drop a file.
-2. **Select Language**: Choose "HTML" or "React" from the header bar above the editor.
-3. **Preview**: See the live result in the right panel.
-4. **Save**: Click "Save" to store the artifact locally. You must rename it from "New_Artifact".
-5. **Manage**: Open the sidebar (`Ctrl+B`) to view, load, and delete saved artifacts.
+2. **Preview**: See the live result in the right panel.
+3. **Save**: Click "Save" to store the artifact locally. You must rename it from "New_Artifact".
+4. **Manage**: Open the sidebar (`Ctrl+B`) to view, load, and delete saved artifacts.
 
 ## Tech Stack
 
 - **HTML5**
 - **Vanilla JavaScript**
 - **Terminal Brutalist CSS** (custom design system, no frameworks)
-- **React/ReactDOM/Babel** (CDN for React preview mode only)
