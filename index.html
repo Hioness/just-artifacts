@@ -6,6 +6,7 @@
     <title>Just Artifacts</title>
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=2">
     <meta name="theme-color" content="#1a1a1a">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; frame-src blob:; base-uri 'self'; form-action 'self';">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -664,7 +665,7 @@
                 <div class="pane-body" style="padding: 1rem; display: flex; align-items: center; justify-content: center;">
                     <div id="preview-wrapper" class="preview-bg-empty">
                         <div id="preview-placeholder">Preview Area</div>
-                        <iframe id="preview-frame" class="preview-bg-empty" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
+                        <iframe id="preview-frame" class="preview-bg-empty" sandbox="allow-scripts allow-forms" referrerpolicy="no-referrer"></iframe>
                     </div>
                 </div>
 
@@ -692,7 +693,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
         </div>
-        <iframe id="fullscreen-frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>
+        <iframe id="fullscreen-frame" sandbox="allow-scripts allow-forms" referrerpolicy="no-referrer"></iframe>
     </div>
 
     <!-- Toast -->
@@ -715,6 +716,8 @@
          */
         const STORAGE_KEY = 'just-artifacts-data';
         const DEFAULT_TITLE = 'New_Artifact';
+        let previewBlobUrl = null;
+        let fullscreenBlobUrl = null;
 
         /**
          * State Management
@@ -757,7 +760,7 @@
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             } catch (e) {
                 if (e.name === 'QuotaExceededError') {
-                    alert("Storage full! Please delete some artifacts to save new ones.");
+                    showToast("Storage full! Delete some artifacts to save new ones.", 5000);
                 } else {
                     console.error("Failed to save state:", e);
                 }
@@ -939,8 +942,10 @@
 
             const content = getHTMLContent(code);
 
+            if (previewBlobUrl) URL.revokeObjectURL(previewBlobUrl);
             const blob = new Blob([content], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
+            previewBlobUrl = url;
 
             elements.previewFrame.src = url;
 
@@ -1085,13 +1090,19 @@
             }
 
             const content = getHTMLContent(code);
+            if (fullscreenBlobUrl) URL.revokeObjectURL(fullscreenBlobUrl);
             const blob = new Blob([content], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
+            fullscreenBlobUrl = url;
             elements.fullscreenFrame.src = url;
         }
 
         function closeFullscreen() {
             elements.fullscreenModal.classList.add('hidden');
+            if (fullscreenBlobUrl) {
+                URL.revokeObjectURL(fullscreenBlobUrl);
+                fullscreenBlobUrl = null;
+            }
             elements.fullscreenFrame.src = ''; // clear to stop scripts
         }
 
@@ -1154,14 +1165,26 @@
                     item.classList.add('active');
                 }
 
-                item.innerHTML = `
-                    <span class="sidebar-item-title">${artifact.title}</span>
-                    <div style="display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0;">
-                        <span class="sidebar-item-meta">${formatRelativeTime(artifact.updatedAt)}</span>
-                        <button class="sidebar-item-del" title="Delete">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        </button>
-                    </div>`;
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'sidebar-item-title';
+                titleSpan.textContent = artifact.title;
+
+                const metaSpan = document.createElement('span');
+                metaSpan.className = 'sidebar-item-meta';
+                metaSpan.textContent = formatRelativeTime(artifact.updatedAt);
+
+                const delBtn = document.createElement('button');
+                delBtn.className = 'sidebar-item-del';
+                delBtn.title = 'Delete';
+                delBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+
+                const btnContainer = document.createElement('div');
+                btnContainer.style.cssText = 'display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0;';
+                btnContainer.appendChild(metaSpan);
+                btnContainer.appendChild(delBtn);
+
+                item.appendChild(titleSpan);
+                item.appendChild(btnContainer);
 
                 // Click to load
                 item.addEventListener('click', (e) => {
@@ -1251,7 +1274,7 @@
         elements.saveBtn.addEventListener('click', () => {
             let title = elements.artifactTitle.value.trim();
             if (!title) {
-                alert("Please enter a title.");
+                showToast("Please enter a title.", 3000);
                 return;
             }
 
@@ -1396,8 +1419,6 @@
         updateSavedListUI(); // Load sidebar list
         initUI();
         setPreviewWidth('100%'); // Sync width input with default state
-        console.log("State loaded:", state);
-
     </script>
 </body>
 </html>
