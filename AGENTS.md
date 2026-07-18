@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-A single-page web application for previewing AI-generated code artifacts.
+A single-page web application for viewing and comparing AI-generated HTML artifacts.
 Vanilla JS + Terminal Brutalist CSS design system. No build step. Everything persists in
 `localStorage`.
 
@@ -17,6 +17,38 @@ Vanilla JS + Terminal Brutalist CSS design system. No build step. Everything per
 │   └── screenshot.png
 ├── temp/               # Scratch workspace (gitignored)
 ```
+
+## Architecture
+
+The app is a **dual-pane viewer** (not a code editor). Two preview panes (A and B)
+display HTML artifacts loaded via drag & drop or click-to-browse.
+
+### State Model
+
+```js
+state = {
+  artifacts: [],        // Saved artifacts (persisted in localStorage)
+  viewMode: 'single',   // 'single' | 'split'
+  activePane: 0,        // 0 = Pane A, 1 = Pane B
+  panes: [
+    { artifactId, title, code },  // Pane A
+    { artifactId, title, code }   // Pane B
+  ]
+}
+```
+
+- Each pane holds its own document independently.
+- `artifactId` links a pane to a saved artifact (null = unsaved copy).
+- localStorage key: `just-artifacts-v2-data`
+
+### Key Patterns
+
+- **Pane focus**: Click a pane header to focus it. The header title input and Save
+  button always operate on the active pane.
+- **File loading**: Drag & drop onto panes, or click empty pane to open file picker.
+  Dropping two files auto-populates both panes and switches to split view.
+- **Rendering**: Panes only re-blob when code actually changes (avoids iframe flash).
+  Empty panes use `about:blank` to prevent accidental parent page reloads.
 
 ## Temp Directory (`/temp/`)
 
@@ -46,7 +78,8 @@ root for convenience but is excluded from version control via `.gitignore`.
    system (see `<style>` block in `index.html`). Use the CSS variables
    (`--bg`, `--fg`, `--border`, `--border-dim`, `--muted`, `--danger`,
    `--pane-bg`, `--mono`, `--sans`) and existing class patterns
-   (`.btn`, `.pane`, `.pane-header`, `.sidebar-item`, `.empty-state`).
+   (`.btn`, `.btn-group`, `.preview-pane`, `.pane-header`, `.pane-tag`,
+   `.sidebar-item`, `.empty-state`, `.drop-overlay`).
    Do not introduce Tailwind or other CSS frameworks.
 3. **No speculative features.** Build what was asked, nothing more.
 4. **Temp files belong in `temp/`.** If you need to generate an exploratory

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Just Artifacts</title>
-    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=2">
+    <title>Just Artifacts — Viewer</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg?v=2">
     <meta name="theme-color" content="#1a1a1a">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; frame-src blob:; base-uri 'self'; form-action 'self';">
     <style>
@@ -41,9 +41,6 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border-dim); border-radius: 0; }
         ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
-
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         /* ── Buttons ─────────────────────────────────────────────────── */
         .btn {
@@ -103,29 +100,6 @@
             border-right: var(--bw) solid var(--border);
         }
 
-        .btn-toggle {
-            background: var(--bg);
-            color: var(--muted);
-            border: var(--bw) solid var(--border-dim);
-            padding: 0.2rem 0.5rem;
-            font-family: var(--mono);
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.1s ease;
-            box-shadow: none;
-            outline: none;
-        }
-        .btn-toggle:hover {
-            background: var(--pane-bg);
-            color: var(--fg);
-            border-color: var(--border);
-        }
-        .btn-toggle:focus-visible {
-            outline: 2px dashed var(--fg);
-            outline-offset: 2px;
-        }
-
         /* ── Inputs ──────────────────────────────────────────────────── */
         input, select, textarea {
             font-family: var(--mono);
@@ -138,10 +112,6 @@
         }
         input:focus, select:focus, textarea:focus {
             border-color: var(--border);
-        }
-        select option {
-            background: var(--bg);
-            color: var(--fg);
         }
 
         /* Hide number input spinners */
@@ -297,21 +267,32 @@
             color: var(--danger);
         }
 
-        /* ── Content Wrapper ─────────────────────────────────────────── */
-        .content-wrapper {
+        /* ── Preview Stage ───────────────────────────────────────────── */
+        #preview-stage {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+            background: var(--bg);
+        }
+        #pane-row {
             flex: 1;
             display: flex;
             overflow: hidden;
-            min-width: 0;
+            min-height: 0;
         }
 
-        /* ── Pane ────────────────────────────────────────────────────── */
-        .pane {
-            border: var(--bw) solid var(--border);
-            background: var(--pane-bg);
+        /* ── Preview Pane ────────────────────────────────────────────── */
+        .preview-pane {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            height: 100%;
+            min-width: 0;
+            background: var(--bg);
+        }
+        .preview-pane + .preview-pane {
+            border-left: var(--bw) solid var(--border-dim);
         }
         .pane-header {
             border-bottom: var(--bw) solid var(--border-dim);
@@ -320,97 +301,107 @@
             text-transform: uppercase;
             font-size: 0.75rem;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 0.5rem;
             background: var(--bg);
+            color: var(--muted);
+            flex-shrink: 0;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.1s ease, color 0.1s ease;
+        }
+        .pane-header:hover {
+            color: var(--fg);
+        }
+        /* Subtle focus indicator: no inverted background, just a brighter
+           strip and a filled tag so you can tell which pane is active. */
+        .preview-pane.active .pane-header {
+            color: var(--fg);
+        }
+        .preview-pane.active .pane-tag {
+            background: var(--fg);
+            color: var(--bg);
+        }
+        .pane-tag {
+            font-size: 0.65rem;
+            border: var(--bw) solid currentColor;
+            padding: 0 0.3rem;
+            line-height: 1.4;
             flex-shrink: 0;
         }
-        .pane-header-meta {
-            font-size: 0.7rem;
-            color: var(--muted);
-            font-weight: normal;
-            text-transform: none;
+        .pane-title {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .pane-unsaved-dot {
+            margin-left: auto;
+            font-size: 0.65rem;
+            font-weight: 900;
+            opacity: 0;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+        }
+        .pane-unsaved-dot.visible {
+            opacity: 1;
         }
         .pane-body {
             flex: 1;
-            overflow: hidden;
             position: relative;
-        }
-
-        /* ── Code Panel ──────────────────────────────────────────────── */
-        #code-panel {
-            width: 35%;
-            min-width: 200px;
-            border-right: var(--bw) solid var(--border-dim);
             display: flex;
-            flex-direction: column;
-            background: var(--bg);
-        }
-        #code-editor {
-            width: 100%;
-            height: 100%;
+            align-items: center;
+            justify-content: center;
             padding: 1rem;
-            font-family: var(--mono);
-            font-size: 0.85rem;
-            line-height: 1.6;
-            resize: none;
-            background: var(--pane-bg);
-            color: var(--fg);
-            border: none;
-            border-bottom: var(--bw) solid var(--border-dim);
-            outline: none;
-            white-space: pre-wrap;
+            overflow: hidden;
+            min-height: 0;
         }
-        #code-editor::placeholder {
-            color: var(--border-dim);
-        }
-
-        /* ── Preview Panel ───────────────────────────────────────────── */
-        #preview-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: var(--bg);
-            min-width: 0;
-        }
-        #preview-wrapper {
+        .frame-wrapper {
             width: 100%;
             height: 100%;
             background: var(--pane-bg);
             transition: width 0.3s ease;
             position: relative;
         }
-        #preview-wrapper.preview-bg-filled {
+        .frame-wrapper.preview-bg-filled {
             background: #ffffff;
         }
-        #preview-wrapper.preview-bg-empty {
-            background: var(--pane-bg);
-        }
-        #preview-frame {
+        .preview-frame {
             width: 100%;
             height: 100%;
             border: 0;
             position: relative;
             z-index: 10;
+            background: transparent;
+            /* Empty iframes must not block clicks on the pane body
+               (click-to-browse). When filled, the frame is interactive. */
+            pointer-events: none;
         }
-        #preview-frame.preview-bg-filled {
-            background: #ffffff;
+        .frame-wrapper.preview-bg-filled .preview-frame {
+            pointer-events: auto;
         }
-        #preview-frame.preview-bg-empty {
-            background: var(--pane-bg);
-        }
-        #preview-placeholder {
+        .preview-placeholder {
             position: absolute;
             inset: 0;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            pointer-events: none;
+            gap: 0.75rem;
             z-index: 0;
             color: var(--muted);
             font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 0.1em;
+            text-align: center;
+            padding: 1rem;
+        }
+        .preview-placeholder .placeholder-sub {
+            font-size: 0.65rem;
+            color: var(--border-dim);
+            letter-spacing: 0.08em;
+        }
+        .preview-placeholder svg {
+            opacity: 0.3;
         }
 
         /* ── Device Bar ──────────────────────────────────────────────── */
@@ -420,6 +411,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-wrap: wrap;
             gap: 0.75rem;
             flex-shrink: 0;
             background: var(--bg);
@@ -429,11 +421,17 @@
             color: var(--muted);
             text-transform: uppercase;
             letter-spacing: 0.08em;
-            margin-right: 0.5rem;
+            margin-right: 0.25rem;
+        }
+        .device-bar-sep {
+            width: 1px;
+            height: 1rem;
+            background: var(--border-dim);
+            margin: 0 0.25rem;
         }
 
-        /* ── Overlays ────────────────────────────────────────────────── */
-        #drop-overlay {
+        /* ── Drop Overlays ───────────────────────────────────────────── */
+        .drop-overlay {
             position: absolute;
             inset: 0;
             z-index: 20;
@@ -441,24 +439,36 @@
             align-items: center;
             justify-content: center;
             background: rgba(17, 17, 17, 0.95);
-            border: 2px dashed var(--added-fg);
+            border: 2px dashed var(--border-dim);
             margin: 0.5rem;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.15s ease;
+            transition: opacity 0.15s ease, border-color 0.15s ease;
         }
-        #drop-overlay.active {
+        body.dragging .drop-overlay {
             opacity: 1;
+            /* During a drag the overlays sit on top of the iframes and
+               become the actual drop targets (iframes would otherwise
+               swallow the drop). */
+            pointer-events: auto;
         }
-        #drop-overlay-text {
+        .preview-pane.hot .drop-overlay {
+            border-color: var(--added-fg);
+        }
+        .preview-pane.hot .drop-overlay-text {
             color: var(--added-fg);
+        }
+        .drop-overlay-text {
+            color: var(--muted);
             font-size: 0.85rem;
             font-weight: bold;
             text-transform: uppercase;
             text-align: center;
             font-family: var(--mono);
+            transition: color 0.15s ease;
         }
 
+        /* ── Toast ───────────────────────────────────────────────────── */
         #toast {
             position: fixed;
             bottom: 2rem;
@@ -481,6 +491,7 @@
             opacity: 1;
         }
 
+        /* ── Confirm Dialog ──────────────────────────────────────────── */
         #confirm-overlay {
             position: fixed;
             inset: 0;
@@ -517,6 +528,7 @@
             font-family: var(--mono);
         }
 
+        /* ── Fullscreen Modal ────────────────────────────────────────── */
         #fullscreen-modal {
             position: fixed;
             inset: 0;
@@ -585,6 +597,17 @@
             text-transform: uppercase;
             font-family: var(--mono);
         }
+
+        /* ── Narrow screens: stack panes vertically ──────────────────── */
+        @media (max-width: 768px) {
+            #pane-row.split {
+                flex-direction: column;
+            }
+            #pane-row.split .preview-pane + .preview-pane {
+                border-left: none;
+                border-top: var(--bw) solid var(--border-dim);
+            }
+        }
     </style>
 </head>
 <body>
@@ -600,8 +623,8 @@
         </div>
 
         <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <button id="save-btn" class="btn" title="Save (Ctrl+S)">Save</button>
-            <button id="new-artifact-btn" class="btn" title="New Artifact (Ctrl+N)">
+            <button id="save-btn" class="btn" title="Save active pane (Ctrl+S)">Save</button>
+            <button id="new-artifact-btn" class="btn" title="Clear active pane (Ctrl+N)">
                 <span style="display: flex; align-items: center; gap: 0.5rem;">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     New
@@ -632,55 +655,81 @@
             </div>
         </aside>
 
-        <!-- Content wrapper: code + preview panels -->
-        <div class="content-wrapper">
-            <!-- Code Panel -->
-            <div id="code-panel">
-                <div class="pane-header">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <input type="hidden" id="language-select" value="html" />
-                        <span style="font-size: 0.7rem; text-transform: uppercase; font-weight: bold; color: var(--fg);">HTML</span>
-                        <button id="text-wrap-btn" class="btn-toggle" title="Toggle Text Wrap">Wrap: On</button>
+        <!-- Preview Stage -->
+        <div id="preview-stage">
+            <div id="pane-row">
+
+                <!-- Pane A -->
+                <section class="preview-pane active" id="pane-0">
+                    <div class="pane-header" title="Click to focus this pane">
+                        <span class="pane-tag">A</span>
+                        <span class="pane-title">New_Artifact</span>
+                        <span class="pane-unsaved-dot">● UNSAVED</span>
                     </div>
-                </div>
-                <div class="pane-body">
-                    <textarea id="code-editor" spellcheck="false" placeholder="// Paste code or drag & drop a file..."></textarea>
-                    <!-- Drop overlay -->
-                    <div id="drop-overlay">
-                        <div id="drop-overlay-text">
-                            <svg style="display: block; margin: 0 auto 0.5rem;" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--added-fg)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="17 8 12 3 7 8"/>
-                                <line x1="12" y1="3" x2="12" y2="15"/>
-                            </svg>
-                            Drop file to load
-                            <div style="font-size: 0.65rem; color: var(--muted); margin-top: 0.5rem; text-transform: uppercase; letter-spacing: 0.1em;">.html .css .js .txt</div>
+                    <div class="pane-body">
+                        <div class="frame-wrapper">
+                            <div class="preview-placeholder">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                                <div>Drop an HTML file here</div>
+                                <div class="placeholder-sub">or click to browse</div>
+                            </div>
+                            <iframe class="preview-frame" sandbox="allow-scripts allow-forms" referrerpolicy="no-referrer" title="Preview A"></iframe>
+                            <div class="drop-overlay">
+                                <div class="drop-overlay-text">Drop to load into A</div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </section>
+
+                <!-- Pane B -->
+                <section class="preview-pane hidden" id="pane-1">
+                    <div class="pane-header" title="Click to focus this pane">
+                        <span class="pane-tag">B</span>
+                        <span class="pane-title">New_Artifact</span>
+                        <span class="pane-unsaved-dot">● UNSAVED</span>
+                    </div>
+                    <div class="pane-body">
+                        <div class="frame-wrapper">
+                            <div class="preview-placeholder">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                                <div>Drop a second file to compare</div>
+                                <div class="placeholder-sub">or click to browse</div>
+                            </div>
+                            <iframe class="preview-frame" sandbox="allow-scripts allow-forms" referrerpolicy="no-referrer" title="Preview B"></iframe>
+                            <div class="drop-overlay">
+                                <div class="drop-overlay-text">Drop to load into B</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
             </div>
 
-            <!-- Preview Panel -->
-            <div id="preview-panel">
-                <div class="pane-body" style="padding: 1rem; display: flex; align-items: center; justify-content: center;">
-                    <div id="preview-wrapper" class="preview-bg-empty">
-                        <div id="preview-placeholder">Preview Area</div>
-                        <iframe id="preview-frame" class="preview-bg-empty" sandbox="allow-scripts allow-forms" referrerpolicy="no-referrer"></iframe>
-                    </div>
+            <!-- Device Presets Bar -->
+            <div class="device-bar">
+                <span class="device-bar-label">View:</span>
+                <div class="btn-group">
+                    <button id="view-single-btn" class="btn btn-active" title="Single page view">Single</button>
+                    <button id="view-split-btn" class="btn" title="Side-by-side view">Split</button>
                 </div>
-
-                <!-- Device Presets Bar -->
-                <div class="device-bar">
-                    <span class="device-bar-label">Viewport:</span>
-                    <button class="device-btn btn" data-width="375px">Mobile (375px)</button>
-                    <button class="device-btn btn" data-width="768px">Tablet (768px)</button>
-                    <button class="device-btn btn" data-width="1024px">Desktop (1024px)</button>
-                    <button class="device-btn btn btn-active" data-width="100%">Full Width</button>
-                    <div style="width: 1px; height: 1rem; background: var(--border-dim); margin: 0 0.5rem;"></div>
-                    <input type="number" id="custom-width" placeholder="Width (px)" style="width: 100px; font-size: 0.7rem; padding: 0.2rem 0.5rem;">
-                    <div style="width: 1px; height: 1rem; background: var(--border-dim); margin: 0 0.5rem;"></div>
-                    <button id="fullscreen-btn" class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">Fullscreen</button>
-                </div>
+                <div class="device-bar-sep"></div>
+                <span class="device-bar-label">Viewport:</span>
+                <button class="device-btn btn" data-width="375px">Mobile (375px)</button>
+                <button class="device-btn btn" data-width="768px">Tablet (768px)</button>
+                <button class="device-btn btn" data-width="1024px">Desktop (1024px)</button>
+                <button class="device-btn btn btn-active" data-width="100%">Full Width</button>
+                <div class="device-bar-sep"></div>
+                <input type="number" id="custom-width" placeholder="Width (px)" style="width: 100px; font-size: 0.7rem; padding: 0.2rem 0.5rem;">
+                <div class="device-bar-sep"></div>
+                <button id="fullscreen-btn" class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;" title="Fullscreen active pane">Fullscreen</button>
             </div>
         </div>
     </main>
@@ -695,6 +744,9 @@
         </div>
         <iframe id="fullscreen-frame" sandbox="allow-scripts allow-forms" referrerpolicy="no-referrer"></iframe>
     </div>
+
+    <!-- Hidden file picker for click-to-browse -->
+    <input type="file" id="file-input" accept=".html,.htm,.svg,.txt,text/html" class="hidden" />
 
     <!-- Toast -->
     <div id="toast"></div>
@@ -714,22 +766,25 @@
         /**
          * Constants & Configuration
          */
-        const STORAGE_KEY = 'just-artifacts-data';
+        const STORAGE_KEY = 'just-artifacts-v2-data';
         const DEFAULT_TITLE = 'New_Artifact';
-        let previewBlobUrl = null;
         let fullscreenBlobUrl = null;
 
         /**
          * State Management
+         *
+         * Two panes (A=0, B=1). Each pane holds its own document:
+         *   { artifactId: string|null, title: string, code: string }
+         * Single view shows the ACTIVE pane full width; split shows both.
          */
         const state = {
             artifacts: [],
-            activeArtifactId: null,
-
-            // Computed property for easy access
-            get activeArtifact() {
-                return this.artifacts.find(a => a.id === this.activeArtifactId) || null;
-            }
+            viewMode: 'single', // 'single' | 'split'
+            activePane: 0,
+            panes: [
+                { artifactId: null, title: DEFAULT_TITLE, code: '' },
+                { artifactId: null, title: DEFAULT_TITLE, code: '' }
+            ]
         };
 
         /**
@@ -740,11 +795,20 @@
                 const raw = localStorage.getItem(STORAGE_KEY);
                 if (raw) {
                     const parsed = JSON.parse(raw);
-                    state.artifacts = (parsed.artifacts || []).map(a => ({
-                        ...a,
-                        language: a.language === 'react' ? 'html' : (a.language || 'html')
-                    }));
-                    state.activeArtifactId = parsed.activeArtifactId || null;
+                    state.artifacts = parsed.artifacts || [];
+                    state.viewMode = parsed.viewMode === 'split' ? 'split' : 'single';
+                    state.activePane = parsed.activePane === 1 ? 1 : 0;
+                    if (Array.isArray(parsed.panes)) {
+                        parsed.panes.slice(0, 2).forEach((p, i) => {
+                            if (p && typeof p === 'object') {
+                                state.panes[i] = {
+                                    artifactId: p.artifactId || null,
+                                    title: p.title || DEFAULT_TITLE,
+                                    code: typeof p.code === 'string' ? p.code : ''
+                                };
+                            }
+                        });
+                    }
                 }
             } catch (e) {
                 console.error("Failed to load state from localStorage:", e);
@@ -753,11 +817,7 @@
 
         function saveState() {
             try {
-                const data = {
-                    artifacts: state.artifacts,
-                    activeArtifactId: state.activeArtifactId
-                };
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
             } catch (e) {
                 if (e.name === 'QuotaExceededError') {
                     showToast("Storage full! Delete some artifacts to save new ones.", 5000);
@@ -774,81 +834,38 @@
             return Date.now().toString(36) + Math.random().toString(36).substr(2);
         }
 
-        function createNewArtifact() {
-            return {
-                id: createArtifactId(),
-                title: DEFAULT_TITLE,
-                code: '',
-                language: 'html',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            };
-        }
-
-        function saveCurrentArtifact(code, language, title) {
-            let artifact = state.activeArtifact;
-            const now = new Date().toISOString();
-
-            if (!artifact) {
-                // If no active artifact, create one
-                artifact = createNewArtifact();
-                state.artifacts.push(artifact);
-                state.activeArtifactId = artifact.id;
-            }
-
-            artifact.code = code;
-            artifact.language = language;
-            artifact.title = title;
-            artifact.updatedAt = now;
-
-            saveState();
-            return artifact;
+        function findArtifact(id) {
+            return state.artifacts.find(a => a.id === id) || null;
         }
 
         function deleteArtifact(id) {
             state.artifacts = state.artifacts.filter(a => a.id !== id);
-            if (state.activeArtifactId === id) {
-                state.activeArtifactId = null;
-            }
+            // Panes referencing the deleted artifact keep their content,
+            // but become unsaved copies
+            state.panes.forEach(p => {
+                if (p.artifactId === id) p.artifactId = null;
+            });
             saveState();
-        }
-
-        function setActiveArtifact(id) {
-            state.activeArtifactId = id;
-            saveState(); // Persist the active selection
         }
 
         /**
          * Unsaved Changes Detection
          */
-        function hasUnsavedChanges() {
-            const code = elements.codeEditor.value;
-            const language = elements.languageSelect.value;
-            const title = elements.artifactTitle.value.trim();
-
-            // No active artifact — unsaved if there's any content at all
-            if (!state.activeArtifactId) {
-                return code.length > 0;
-            }
-
-            const artifact = state.activeArtifact;
-            // Active ID points to a deleted artifact — content is unsaved
-            if (!artifact) {
-                return code.length > 0;
-            }
-
-            // Compare current editor state with the saved version
-            return code !== artifact.code ||
-                   language !== artifact.language ||
-                   title !== artifact.title;
+        function paneUnsaved(i) {
+            const p = state.panes[i];
+            if (!p.code) return false;
+            const artifact = p.artifactId ? findArtifact(p.artifactId) : null;
+            if (!artifact) return true;
+            return p.code !== artifact.code || p.title !== artifact.title;
         }
 
-        function updateUnsavedIndicator() {
-            if (hasUnsavedChanges()) {
-                elements.unsavedIndicator.style.opacity = '1';
-            } else {
-                elements.unsavedIndicator.style.opacity = '0';
-            }
+        function updateUnsavedIndicators() {
+            // Header indicator tracks the active pane
+            elements.unsavedIndicator.style.opacity = paneUnsaved(state.activePane) ? '1' : '0';
+            // Per-pane dots
+            panes.forEach((p, i) => {
+                p.unsavedDot.classList.toggle('visible', paneUnsaved(i));
+            });
         }
 
         /**
@@ -856,23 +873,22 @@
          */
         const elements = {
             newArtifactBtn: document.getElementById('new-artifact-btn'),
-            codeEditor: document.getElementById('code-editor'),
-            previewFrame: document.getElementById('preview-frame'),
-            languageSelect: document.getElementById('language-select'),
-            textWrapBtn: document.getElementById('text-wrap-btn'),
             artifactTitle: document.getElementById('artifact-title'),
             saveBtn: document.getElementById('save-btn'),
             unsavedIndicator: document.getElementById('unsaved-indicator'),
             sidebar: document.getElementById('sidebar'),
             savedList: document.getElementById('saved-list'),
             railToggleBtn: document.getElementById('rail-toggle-btn'),
-            previewWrapper: document.getElementById('preview-wrapper'),
+            paneRow: document.getElementById('pane-row'),
+            viewSingleBtn: document.getElementById('view-single-btn'),
+            viewSplitBtn: document.getElementById('view-split-btn'),
             deviceButtons: document.querySelectorAll('.device-btn'),
             customWidthInput: document.getElementById('custom-width'),
             fullscreenBtn: document.getElementById('fullscreen-btn'),
             fullscreenModal: document.getElementById('fullscreen-modal'),
             fullscreenFrame: document.getElementById('fullscreen-frame'),
             closeFullscreenBtn: document.getElementById('close-fullscreen-btn'),
+            fileInput: document.getElementById('file-input'),
             confirmOverlay: document.getElementById('confirm-overlay'),
             confirmMessage: document.getElementById('confirm-message'),
             confirmCancelBtn: document.getElementById('confirm-cancel-btn'),
@@ -880,6 +896,26 @@
             confirmOkText: document.getElementById('confirm-ok-text'),
         };
 
+        const panes = [0, 1].map(i => {
+            const el = document.getElementById('pane-' + i);
+            return {
+                el,
+                header: el.querySelector('.pane-header'),
+                titleEl: el.querySelector('.pane-title'),
+                unsavedDot: el.querySelector('.pane-unsaved-dot'),
+                body: el.querySelector('.pane-body'),
+                wrapper: el.querySelector('.frame-wrapper'),
+                placeholder: el.querySelector('.preview-placeholder'),
+                frame: el.querySelector('.preview-frame'),
+                overlay: el.querySelector('.drop-overlay'),
+                blobUrl: null,
+                renderedCode: null
+            };
+        });
+
+        /**
+         * Confirm Dialog
+         */
         let confirmCallback = null;
 
         function showConfirmDialog(message, onConfirm, okText = 'Delete') {
@@ -912,150 +948,134 @@
         });
 
         /**
-         * Rendering Logic
+         * Toast
          */
-        function getHTMLContent(code) {
-            return code;
+        const toast = document.getElementById('toast');
+        let toastTimer = null;
+
+        function showToast(message, duration = 3000) {
+            toast.textContent = message;
+            toast.classList.add('visible');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.remove('visible');
+            }, duration);
         }
 
-        function updatePreview() {
-            const code = elements.codeEditor.value;
-            const hasCode = code.trim().length > 0;
-            const wrapper = elements.previewWrapper;
-            const frame = elements.previewFrame;
-            const placeholder = document.getElementById('preview-placeholder');
+        /**
+         * Pane Rendering
+         */
+        function renderPane(i) {
+            const pane = panes[i];
+            const data = state.panes[i];
+            const hasCode = data.code.trim().length > 0;
 
-            // Toggle background: dark gray when empty, white when there's code
-            if (hasCode) {
-                wrapper.classList.remove('preview-bg-empty');
-                wrapper.classList.add('preview-bg-filled');
-                frame.classList.remove('preview-bg-empty');
-                frame.classList.add('preview-bg-filled');
-                placeholder.style.display = 'none';
-            } else {
-                wrapper.classList.remove('preview-bg-filled');
-                wrapper.classList.add('preview-bg-empty');
-                frame.classList.remove('preview-bg-filled');
-                frame.classList.add('preview-bg-empty');
-                placeholder.style.display = '';
-            }
+            pane.titleEl.textContent = data.title;
+            pane.wrapper.classList.toggle('preview-bg-filled', hasCode);
+            pane.placeholder.style.display = hasCode ? 'none' : '';
 
-            const content = getHTMLContent(code);
-
-            if (previewBlobUrl) URL.revokeObjectURL(previewBlobUrl);
-            const blob = new Blob([content], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            previewBlobUrl = url;
-
-            elements.previewFrame.src = url;
-
-            // Also update fullscreen frame if open
-            if (!elements.fullscreenModal.classList.contains('hidden')) {
-                elements.fullscreenFrame.src = url;
-            }
-        }
-
-        // Debounce update to avoid flashing on every keystroke
-        let debounceTimer;
-        function debouncedUpdatePreview() {
-            clearTimeout(debounceTimer);
-            updateUnsavedIndicator(); // Update immediately on input
-            debounceTimer = setTimeout(() => {
-                updatePreview();
-                // Auto-save: only update existing artifacts, don't create new ones
-                if (state.activeArtifactId && state.activeArtifact) {
-                    const code = elements.codeEditor.value;
-                    const language = elements.languageSelect.value;
-                    const title = elements.artifactTitle.value.trim();
-                    if (title && title !== DEFAULT_TITLE) {
-                        saveCurrentArtifact(code, language, title);
-                        updateSavedListUI();
-                        updateUnsavedIndicator();
-                    }
+            // Only re-blob when the code actually changed (avoids iframe flash)
+            if (pane.renderedCode !== data.code) {
+                pane.renderedCode = data.code;
+                if (pane.blobUrl) {
+                    URL.revokeObjectURL(pane.blobUrl);
+                    pane.blobUrl = null;
                 }
-            }, 500); // 500ms delay
-        }
-
-        /**
-         * UI Logic
-         */
-        function initUI() {
-            // Load active artifact or reset
-            if (state.activeArtifactId && state.activeArtifact) {
-                loadArtifactToUI(state.activeArtifact);
-            } else {
-                resetUI();
-            }
-            updatePreview();
-        }
-
-        function loadArtifactToUI(artifact) {
-            elements.codeEditor.value = artifact.code || '';
-            elements.languageSelect.value = 'html';
-            elements.artifactTitle.value = artifact.title || DEFAULT_TITLE;
-            updatePreview();
-            updateUnsavedIndicator();
-        }
-
-        function resetUI() {
-            elements.codeEditor.value = '';
-            elements.languageSelect.value = 'html';
-            elements.artifactTitle.value = DEFAULT_TITLE;
-            state.activeArtifactId = null; // Ensure no ID is set so next save creates new
-            updatePreview();
-            updateUnsavedIndicator();
-        }
-
-        function toggleTextWrap() {
-            if (elements.codeEditor.style.whiteSpace === 'pre') {
-                elements.codeEditor.style.whiteSpace = 'pre-wrap';
-                elements.textWrapBtn.textContent = 'Wrap: On';
-            } else {
-                elements.codeEditor.style.whiteSpace = 'pre';
-                elements.textWrapBtn.textContent = 'Wrap: Off';
+                if (hasCode) {
+                    const blob = new Blob([data.code], { type: 'text/html' });
+                    pane.blobUrl = URL.createObjectURL(blob);
+                    pane.frame.src = pane.blobUrl;
+                } else {
+                    // about:blank is safe; setting src='' can reload the parent page
+                    pane.frame.src = 'about:blank';
+                }
             }
         }
 
-        // Initial set
-        elements.codeEditor.style.whiteSpace = 'pre-wrap';
+        function renderLayout() {
+            const split = state.viewMode === 'split';
+            elements.paneRow.classList.toggle('split', split);
+            panes.forEach((pane, i) => {
+                // In single mode only the active pane is visible; split shows both
+                pane.el.classList.toggle('hidden', !split && i !== state.activePane);
+                pane.el.classList.toggle('active', i === state.activePane);
+            });
+            elements.viewSingleBtn.classList.toggle('btn-active', !split);
+            elements.viewSplitBtn.classList.toggle('btn-active', split);
+        }
+
+        function focusPane(i) {
+            if (state.activePane === i) return;
+            state.activePane = i;
+            elements.artifactTitle.value = state.panes[i].title;
+            renderLayout();
+            updateUnsavedIndicators();
+            updateSavedListUI();
+            saveState();
+        }
+
+        function setViewMode(mode) {
+            state.viewMode = mode;
+            renderLayout();
+            saveState();
+        }
+
+        function setPaneContent(i, code, title, artifactId = null) {
+            state.panes[i] = { artifactId, title, code };
+            renderPane(i);
+            if (i === state.activePane) {
+                elements.artifactTitle.value = title;
+            }
+            updateUnsavedIndicators();
+            saveState();
+        }
+
+        function clearPane(i) {
+            setPaneContent(i, '', DEFAULT_TITLE, null);
+        }
 
         /**
-         * Event Listeners
+         * Header Title Input — bound to the active pane
          */
-        elements.codeEditor.addEventListener('input', debouncedUpdatePreview);
+        elements.artifactTitle.addEventListener('input', () => {
+            const i = state.activePane;
+            state.panes[i].title = elements.artifactTitle.value;
+            panes[i].titleEl.textContent = elements.artifactTitle.value || DEFAULT_TITLE;
+            updateUnsavedIndicators();
+            saveState();
+        });
 
-        elements.artifactTitle.addEventListener('input', updateUnsavedIndicator);
+        elements.artifactTitle.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                elements.saveBtn.click();
+            }
+        });
 
-        elements.textWrapBtn.addEventListener('click', toggleTextWrap);
+        // Pane header click focuses that pane
+        panes.forEach((pane, i) => {
+            pane.header.addEventListener('click', () => focusPane(i));
+        });
 
         /**
-         * Device Presets & Resizing
+         * Device Presets & Resizing — applies to all visible panes
          */
         function setPreviewWidth(width) {
-            elements.previewWrapper.style.width = width;
+            panes.forEach(p => { p.wrapper.style.width = width; });
 
-            // Update input value to show current width
             if (width === '100%') {
                 elements.customWidthInput.value = '';
             } else {
                 elements.customWidthInput.value = parseInt(width);
             }
 
-            // Update UI state
             elements.deviceButtons.forEach(btn => {
-                const btnWidth = btn.dataset.width;
-                if (btnWidth === width) {
-                    btn.classList.add('btn-active');
-                } else {
-                    btn.classList.remove('btn-active');
-                }
+                btn.classList.toggle('btn-active', btn.dataset.width === width);
             });
         }
 
         elements.deviceButtons.forEach(btn => {
             btn.addEventListener('click', () => {
-                const width = btn.dataset.width;
-                setPreviewWidth(width);
+                setPreviewWidth(btn.dataset.width);
             });
         });
 
@@ -1063,38 +1083,25 @@
             const val = e.target.value;
             if (val) {
                 setPreviewWidth(val + 'px');
-                // Deselect buttons
-                elements.deviceButtons.forEach(btn => {
-                    btn.classList.remove('btn-active');
-                });
+                elements.deviceButtons.forEach(btn => btn.classList.remove('btn-active'));
             }
         });
 
+        elements.viewSingleBtn.addEventListener('click', () => setViewMode('single'));
+        elements.viewSplitBtn.addEventListener('click', () => setViewMode('split'));
+
         /**
-         * Fullscreen Logic
+         * Fullscreen Logic — active pane only
          */
         function openFullscreen() {
+            const data = state.panes[state.activePane];
             elements.fullscreenModal.classList.remove('hidden');
-            // Ensure content is synced
-            const code = elements.codeEditor.value;
-            const hasCode = code.trim().length > 0;
-            const frame = elements.fullscreenFrame;
+            elements.fullscreenFrame.style.background = data.code.trim() ? '#ffffff' : 'var(--pane-bg)';
 
-            // Toggle background to match preview state
-            if (hasCode) {
-                frame.classList.remove('preview-bg-empty');
-                frame.classList.add('preview-bg-filled');
-            } else {
-                frame.classList.remove('preview-bg-filled');
-                frame.classList.add('preview-bg-empty');
-            }
-
-            const content = getHTMLContent(code);
             if (fullscreenBlobUrl) URL.revokeObjectURL(fullscreenBlobUrl);
-            const blob = new Blob([content], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            fullscreenBlobUrl = url;
-            elements.fullscreenFrame.src = url;
+            const blob = new Blob([data.code], { type: 'text/html' });
+            fullscreenBlobUrl = URL.createObjectURL(blob);
+            elements.fullscreenFrame.src = fullscreenBlobUrl;
         }
 
         function closeFullscreen() {
@@ -1103,7 +1110,7 @@
                 URL.revokeObjectURL(fullscreenBlobUrl);
                 fullscreenBlobUrl = null;
             }
-            elements.fullscreenFrame.src = ''; // clear to stop scripts
+            elements.fullscreenFrame.src = '';
         }
 
         elements.fullscreenBtn.addEventListener('click', openFullscreen);
@@ -1122,12 +1129,12 @@
                 e.preventDefault();
                 toggleSidebar(!sidebarVisible);
             }
-            // Ctrl+N / Cmd+N → New Artifact
+            // Ctrl+N / Cmd+N → New (clear active pane)
             if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
                 e.preventDefault();
                 handleNewArtifact();
             }
-            // Ctrl+S / Cmd+S → Save
+            // Ctrl+S / Cmd+S → Save active pane
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {
                 e.preventDefault();
                 elements.saveBtn.click();
@@ -1153,7 +1160,7 @@
                             <line x1="9" y1="15" x2="15" y2="15"></line>
                         </svg>
                         <p class="empty-state-text">No saved artifacts</p>
-                        <p class="empty-state-sub">Write code, click Save, and it appears here</p>
+                        <p class="empty-state-sub">Drop a file, click Save, and it appears here</p>
                     </div>`;
                 return;
             }
@@ -1161,7 +1168,8 @@
             state.artifacts.forEach(artifact => {
                 const item = document.createElement('div');
                 item.className = 'sidebar-item';
-                if (state.activeArtifactId === artifact.id) {
+                // Highlight if loaded in any pane
+                if (state.panes.some(p => p.artifactId === artifact.id)) {
                     item.classList.add('active');
                 }
 
@@ -1186,11 +1194,10 @@
                 item.appendChild(titleSpan);
                 item.appendChild(btnContainer);
 
-                // Click to load
+                // Click loads into the ACTIVE pane
                 item.addEventListener('click', (e) => {
                     if (e.target.closest('.sidebar-item-del')) return;
-                    setActiveArtifact(artifact.id);
-                    loadArtifactToUI(artifact);
+                    setPaneContent(state.activePane, artifact.code, artifact.title, artifact.id);
                     updateSavedListUI();
                     if (window.innerWidth < 768) {
                         toggleSidebar(false);
@@ -1198,14 +1205,12 @@
                 });
 
                 // Delete button (hold Shift to skip confirmation)
-                const menuBtn = item.querySelector('.sidebar-item-del');
-                menuBtn.addEventListener('click', (e) => {
+                delBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    const artifactId = artifact.id;
                     const doDelete = () => {
-                        deleteArtifact(artifactId);
-                        if (state.activeArtifactId === null) resetUI();
+                        deleteArtifact(artifact.id);
                         updateSavedListUI();
+                        updateUnsavedIndicators();
                     };
                     if (e.shiftKey) {
                         doDelete();
@@ -1234,63 +1239,76 @@
             if (show === sidebarVisible) return;
             sidebarVisible = show;
 
-            if (show) {
-                elements.sidebar.style.width = '256px';
-            } else {
-                elements.sidebar.style.width = '0';
-            }
-
-            // Highlight the hamburger button in the rail when sidebar is open
-            if (show) {
-                elements.railToggleBtn.classList.add('active');
-            } else {
-                elements.railToggleBtn.classList.remove('active');
-            }
+            elements.sidebar.style.width = show ? '256px' : '0';
+            elements.railToggleBtn.classList.toggle('active', show);
         }
 
-        // Rail: hamburger toggles sidebar
         elements.railToggleBtn.addEventListener('click', () => toggleSidebar(!sidebarVisible));
 
         /**
-         * New Artifact Button (Header)
+         * New Button — clears the active pane
          */
         function handleNewArtifact() {
-            if (hasUnsavedChanges()) {
+            const i = state.activePane;
+            if (paneUnsaved(i)) {
                 showConfirmDialog(
-                    'You have unsaved changes. Discard them and create a new artifact?',
-                    () => { resetUI(); },
+                    `Pane ${i === 0 ? 'A' : 'B'} has unsaved changes. Discard them?`,
+                    () => { clearPane(i); updateSavedListUI(); },
                     'Discard'
                 );
             } else {
-                resetUI();
+                clearPane(i);
+                updateSavedListUI();
             }
         }
 
         elements.newArtifactBtn.addEventListener('click', handleNewArtifact);
 
         /**
-         * Save Logic
+         * Save Logic — saves the active pane
          */
         elements.saveBtn.addEventListener('click', () => {
-            let title = elements.artifactTitle.value.trim();
+            const i = state.activePane;
+            const pane = state.panes[i];
+            const title = elements.artifactTitle.value.trim();
+
+            if (!pane.code) {
+                showToast("Nothing to save. Drop a file first.", 3000);
+                return;
+            }
             if (!title) {
                 showToast("Please enter a title.", 3000);
                 return;
             }
-
             if (title === DEFAULT_TITLE) {
-                // Prompt user to rename
                 elements.artifactTitle.focus();
                 elements.artifactTitle.select();
                 return;
             }
 
-            const code = elements.codeEditor.value;
-            const language = elements.languageSelect.value;
+            const now = new Date().toISOString();
+            let artifact = pane.artifactId ? findArtifact(pane.artifactId) : null;
 
-            saveCurrentArtifact(code, language, title);
+            if (artifact) {
+                artifact.code = pane.code;
+                artifact.title = title;
+                artifact.updatedAt = now;
+            } else {
+                artifact = {
+                    id: createArtifactId(),
+                    title,
+                    code: pane.code,
+                    createdAt: now,
+                    updatedAt: now
+                };
+                state.artifacts.push(artifact);
+                pane.artifactId = artifact.id;
+            }
+            pane.title = title;
+
+            saveState();
             updateSavedListUI();
-            updateUnsavedIndicator();
+            updateUnsavedIndicators();
 
             // Visual feedback
             const originalText = elements.saveBtn.textContent;
@@ -1300,78 +1318,40 @@
             }, 1000);
         });
 
-        // Handle Enter key in title input to trigger save (optional but nice)
-        elements.artifactTitle.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                elements.saveBtn.click();
-                elements.codeEditor.focus(); // Return focus to editor
-            }
-        });
-
         /**
-         * Drag & Drop File Loading
+         * Drag & Drop File Loading — onto the preview panes
          */
-        const ALLOWED_EXTENSIONS = new Set([
-            '.html', '.htm', '.css', '.js', '.ts',
-            '.txt', '.json', '.md', '.xml', '.svg', '.csv'
-        ]);
+        const ALLOWED_EXTENSIONS = new Set(['.html', '.htm', '.svg', '.txt']);
         const MAX_FILE_SIZE = 1024 * 1024; // 1MB
 
-        const dropOverlay = document.getElementById('drop-overlay');
-        const toast = document.getElementById('toast');
-        let dragCounter = 0;
-        let toastTimer = null;
-
-        function showToast(message, duration = 3000) {
-            toast.textContent = message;
-            toast.classList.add('visible');
-            clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => {
-                toast.classList.remove('visible');
-            }, duration);
-        }
-
         function isValidFile(file) {
-            // Reject oversized files
             if (file.size > MAX_FILE_SIZE) {
                 const mb = (file.size / 1024 / 1024).toFixed(1);
                 showToast(`File too large (${mb}MB). Max 1MB.`);
                 return false;
             }
-            // Validate by extension if present
             if (file.name.includes('.')) {
                 const ext = '.' + file.name.split('.').pop().toLowerCase();
                 if (!ALLOWED_EXTENSIONS.has(ext)) {
-                    showToast(`Unsupported file type: ${ext}`);
+                    showToast(`Unsupported file type: ${ext}. Drop an HTML file.`);
                     return false;
                 }
                 return true;
             }
-            // No extension — check MIME type as fallback
-            if (file.type && !file.type.startsWith('text/')
-                && file.type !== 'application/json'
-                && file.type !== 'application/javascript') {
-                showToast('Binary files not supported. Drop a text file.');
+            if (file.type && !file.type.startsWith('text/') && file.type !== 'image/svg+xml') {
+                showToast('Binary files not supported. Drop an HTML file.');
                 return false;
             }
             return true;
         }
 
-        function handleFileDrop(file) {
-            if (!isValidFile(file)) return;
-
+        function loadFileIntoPane(file, i) {
             const reader = new FileReader();
             reader.onload = () => {
-                elements.codeEditor.value = reader.result;
-                // Set artifact title to filename (minus extension)
                 const titleWithoutExt = file.name.replace(/\.[^/.]+$/, '');
-                if (titleWithoutExt) {
-                    elements.artifactTitle.value = titleWithoutExt;
-                }
-                // Clear active artifact reference — drop replaces content
-                state.activeArtifactId = null;
-                updatePreview();
-                updateUnsavedIndicator();
+                setPaneContent(i, reader.result, titleWithoutExt || DEFAULT_TITLE, null);
+                focusPane(i);
+                showToast(`Loaded ${file.name} → Pane ${i === 0 ? 'A' : 'B'}`);
             };
             reader.onerror = () => {
                 showToast('Error reading file. Try again.');
@@ -1379,46 +1359,122 @@
             reader.readAsText(file);
         }
 
-        // Drag enter/leave counter prevents flicker when dragging over child elements
-        document.addEventListener('dragenter', (e) => {
+        function handleDroppedFiles(fileList, targetPane) {
+            const files = Array.from(fileList).filter(isValidFile);
+            if (files.length === 0) return;
+
+            loadFileIntoPane(files[0], targetPane);
+
+            if (files.length > 1) {
+                // Second file goes to the other pane; show both
+                loadFileIntoPane(files[1], 1 - targetPane);
+                setViewMode('split');
+                if (files.length > 2) {
+                    showToast('Only the first 2 files were loaded.');
+                }
+            }
+        }
+
+        // Global drag tracking: show overlays whenever files are over the window
+        let dragDepth = 0;
+
+        function endDrag() {
+            dragDepth = 0;
+            document.body.classList.remove('dragging');
+            panes.forEach(p => p.el.classList.remove('hot'));
+        }
+
+        function setHotPane(i) {
+            panes.forEach((p, j) => p.el.classList.toggle('hot', j === i));
+        }
+
+        window.addEventListener('dragenter', (e) => {
+            if (!e.dataTransfer || !Array.from(e.dataTransfer.types).includes('Files')) return;
             e.preventDefault();
-            dragCounter++;
-            if (dragCounter === 1) {
-                dropOverlay.classList.add('active');
+            dragDepth++;
+            if (dragDepth === 1) {
+                document.body.classList.add('dragging');
             }
         });
 
-        document.addEventListener('dragleave', (e) => {
-            dragCounter--;
-            if (dragCounter === 0) {
-                dropOverlay.classList.remove('active');
+        window.addEventListener('dragleave', () => {
+            if (dragDepth === 0) return;
+            dragDepth--;
+            if (dragDepth === 0) {
+                endDrag();
             }
         });
 
-        document.addEventListener('dragover', (e) => {
+        window.addEventListener('dragover', (e) => {
             e.preventDefault(); // Required to allow drop
         });
 
-        document.addEventListener('drop', (e) => {
+        // Safety net: prevent browser navigation on stray drops, reset overlay state
+        window.addEventListener('drop', (e) => {
             e.preventDefault();
-            dragCounter = 0;
-            dropOverlay.classList.remove('active');
-
-            // Guard: only handle file drops, not dragged text/images from the browser
-            if (!e.dataTransfer.types.includes('Files')) return;
-
-            const files = e.dataTransfer.files;
-            if (files.length === 0) return;
-
-            // Take the first file only; ignore the rest
-            handleFileDrop(files[0]);
+            endDrag();
         });
 
-        // Initialize
+        window.addEventListener('blur', endDrag);
+
+        // Per-pane drop targets. During a drag the overlay sits on top of the
+        // iframe (pointer-events:auto) and is the real drop target; the pane-body
+        // handler covers the padding area around the frame.
+        panes.forEach((pane, i) => {
+            pane.overlay.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                setHotPane(i);
+            });
+            pane.overlay.addEventListener('drop', (e) => {
+                e.preventDefault();
+                endDrag();
+                if (!e.dataTransfer || !e.dataTransfer.files.length) return;
+                handleDroppedFiles(e.dataTransfer.files, i);
+            });
+            pane.body.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                setHotPane(i);
+            });
+            pane.body.addEventListener('drop', (e) => {
+                e.preventDefault();
+                endDrag();
+                if (!e.dataTransfer || !e.dataTransfer.files.length) return;
+                handleDroppedFiles(e.dataTransfer.files, i);
+            });
+        });
+
+        /**
+         * Click empty pane → file picker
+         */
+        let fileInputTarget = 0;
+
+        panes.forEach((pane, i) => {
+            pane.body.addEventListener('click', () => {
+                focusPane(i);
+                if (!state.panes[i].code) {
+                    fileInputTarget = i;
+                    elements.fileInput.click();
+                }
+            });
+        });
+
+        elements.fileInput.addEventListener('change', () => {
+            if (elements.fileInput.files.length) {
+                handleDroppedFiles(elements.fileInput.files, fileInputTarget);
+                elements.fileInput.value = ''; // Allow picking the same file again
+            }
+        });
+
+        /**
+         * Initialize
+         */
         loadState();
-        updateSavedListUI(); // Load sidebar list
-        initUI();
-        setPreviewWidth('100%'); // Sync width input with default state
+        elements.artifactTitle.value = state.panes[state.activePane].title;
+        panes.forEach((_, i) => renderPane(i));
+        renderLayout();
+        updateSavedListUI();
+        updateUnsavedIndicators();
+        setPreviewWidth('100%');
     </script>
 </body>
 </html>
